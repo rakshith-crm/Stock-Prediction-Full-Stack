@@ -57,10 +57,10 @@ def select_all_from_table(request, tablename):
     cursor.execute(f'''select * from {tablename};''')
     data = cursor.fetchall()[-100:]
     final = []
-    final.append(['Date', 'Actual', 'Pred'])
+    final.append([{'type': 'string', 'label' : 'Date'}, 'Actual', 'Pred'])
     for i in range(len(data)):
         f = []
-        f.append(i)
+        f.append(data[i][0])
         if(data[i][1]==None):
             f.append(None)
         else:
@@ -70,8 +70,10 @@ def select_all_from_table(request, tablename):
         else:
             f.append(float(data[i][2]))
         final.append(f)
-    # print(final)
-    json_response = {"data" : final}
+    zoom = []
+    zoom.append([{'type': 'string', 'label' : 'Date'}, 'Actual', 'Pred'])
+    zoom = zoom + final[-20:]
+    json_response = {"data" : final, "zoom" : zoom}
     return JsonResponse(json_response, safe=False)
 
 def insert_value(company_name, tuple):
@@ -268,16 +270,17 @@ def forecast_for_ticker(ticker):
         return False    
     return True
 
-
-def get_all_companies():
+@api_view(['GET'])
+def get_all_companies(request):
     cursor = con.cursor()
     command = 'SELECT * FROM companies;'
     cursor.execute(command)
     data = cursor.fetchall()
     companies = []
     for i in data:
-        companies.append(i[0]+'.ns')
-    return companies
+        companies.append(i[0].upper()+'.NS')
+    json_responce = {'data' : companies};
+    return JsonResponse(json_responce, safe=False)
 
 
 # today = datetime.now().date().strftime('%Y-%m-%d')
