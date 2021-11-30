@@ -1,14 +1,57 @@
-import { Grid, Paper, AppBar, IconButton, Button, Toolbar, Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Grid, Paper, AppBar, IconButton, InputBase, Button, Toolbar, Box, Typography, FormControl, InputLabel, Select, MenuItem, Container, Menu, Tooltip, Avatar } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Chart } from "react-google-charts";
 import MenuIcon from "@mui/icons-material/Menu";
 import SendIcon from "@mui/icons-material/Send"
+import BubbleChartIcon from '@mui/icons-material/BubbleChart';
+
+import { styled, alpha } from '@mui/material/styles';
+
 
 const HomePage = ()=>{
     var [StockData, setStockData] = useState([]);
     var [Zoom, setZoom] = useState([]);
     var [Ticker, setTicker] = useState('TATASTEEL.NS');
     var [Companies, setCompanies] = useState([]);
+    const Search = styled('div')(({ theme }) => ({
+        position: 'relative',
+        borderRadius: theme.shape.borderRadius,
+        backgroundColor: alpha(theme.palette.common.white, 0.15),
+        '&:hover': {
+          backgroundColor: alpha(theme.palette.common.white, 0.25),
+        },
+        marginLeft: 0,
+        width: '100%',
+        [theme.breakpoints.up('sm')]: {
+          marginLeft: theme.spacing(1),
+          width: 'auto',
+        },
+      }));
+    const SearchIconWrapper = styled('div')(({ theme }) => ({
+        padding: theme.spacing(0, 2),
+        height: '100%',
+        position: 'absolute',
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }));
+    const StyledInputBase = styled(InputBase)(({ theme }) => ({
+        color: 'inherit',
+        '& .MuiInputBase-input': {
+          padding: theme.spacing(1, 1, 1, 0),
+          // vertical padding + font size from searchIcon
+          paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+          transition: theme.transitions.create('width'),
+          width: '100%',
+          [theme.breakpoints.up('sm')]: {
+            width: '12ch',
+            '&:focus': {
+              width: '20ch',
+            },
+          },
+        },
+      }));
     const getData = async(ticker)=>{
         try {
             const query = await fetch(`http://localhost:8000/api/stock-data/${ticker}`,{
@@ -48,21 +91,12 @@ const HomePage = ()=>{
             <Box>
             <AppBar position="static">
                 <Toolbar>
-                <IconButton
-                    size="large"
-                    edge="start"
-                    color="inherit"
-                    aria-label="menu"
-                    sx={{ mr: 2 }}
-                >
-                    <MenuIcon />
-                </IconButton>
-                <Button variant="contained" style={{backgroundColor : '#184e77'}} endIcon={<SendIcon />}>
-                    MAKE Request
-                </Button>
+                
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                     {Ticker}
                 </Typography>
+                <Button style={{backgroundColor : 'green'}} size="large" variant="contained" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">REQUEST</Button>
+
                 <FormControl style={{color : 'white'}} variant="filled" sx={{ m: 1, minWidth: 120 }}>
                     <InputLabel style={{color : 'black'}} id="demo-simple-select-helper-label">Ticker</InputLabel>
                     <Select
@@ -76,7 +110,7 @@ const HomePage = ()=>{
                     >
                     {Companies.map(company => (
                         <MenuItem style={{color : 'black'}} value={company}>
-                            <b style={{color : 'black'}}>{company}</b>
+                            <Typography style={{color : 'black'}}>{company}</Typography>
                         </MenuItem>
                     ))}
                     </Select>
@@ -84,6 +118,25 @@ const HomePage = ()=>{
                 </Toolbar>
             </AppBar>
             </Box>
+            
+            
+            <div class="collapse" id="collapseExample">
+            <Paper className='p-5 container mt-3'>
+            <form>
+            <h3>STOCK REQUEST FORM</h3><hr />
+            <div class="form-group mt-3">
+                <label for="email">Email address</label>
+                <input type="email" class="form-control" id="email" aria-describedby="emailHelp" placeholder="Enter email" required />
+                <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+            </div>
+            <div class="form-group mt-3">
+                <label for="ticker">Ticker Code</label>
+                <input type="text" class="form-control" id="ticker" placeholder="Ticker" required />
+            </div>
+            <Button type="submit" className='mt-3' variant="contained">SUBMIT</Button>
+            </form>
+            </Paper>
+            </div>
             <Grid container spacing={2} xs={12}>
                 <Grid item xs={12} md={6} lg={6}>
                     <Paper elevation={4}>
