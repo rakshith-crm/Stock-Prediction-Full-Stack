@@ -2,8 +2,8 @@ import { Grid, Paper, AppBar, IconButton, Button, Toolbar, Box, Typography, Form
 import React, { useEffect, useState } from 'react';
 import { Chart } from "react-google-charts";
 import MenuIcon from "@mui/icons-material/Menu";
-import SendIcon from "@mui/icons-material/Send"
-import BubbleChartIcon from '@mui/icons-material/BubbleChart';
+import SendIcon from "@mui/icons-material/Send";
+import DonutLargeIcon from '@mui/icons-material/DonutLarge';
 import LoadingButton from '@mui/lab/LoadingButton';
 import {toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,6 +11,9 @@ import 'react-toastify/dist/ReactToastify.css';
 toast.configure();
 
 const HomePage = ()=>{
+    const theme_color = '#2a6f97';
+    const theme_color2 = '#012a4a';
+    const app_bar_text = 'white';
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [formTicker, setFormTicker] = useState('');
     const [loading, setLoading] = useState(false);
@@ -26,7 +29,7 @@ const HomePage = ()=>{
       };
     const getData = async(ticker)=>{
         try {
-            const query = await fetch(`http://localhost:8000/api/stock-data/${ticker}/`,{
+            const query = await fetch(`api/stock-data/${ticker}/`,{
                 method : 'GET'
             });
             const data = await query.json();
@@ -41,7 +44,7 @@ const HomePage = ()=>{
     
     const getCompanies = async()=>{
         try {
-            const query = await fetch('http://localhost:8000/api/allcompanies/',{
+            const query = await fetch('api/allcompanies/',{
                 method : 'GET'
             });
             const data = await query.json();
@@ -53,7 +56,7 @@ const HomePage = ()=>{
         }  
     }
     const requestStock = async()=>{
-        const query = await fetch(`http://localhost:8000/api/stock-request/${formTicker}`, {
+        const query = await fetch(`api/stock-request/${formTicker}`, {
             method : 'GET',
         });
         const response = await query.json();
@@ -75,7 +78,7 @@ const HomePage = ()=>{
 
     return (
         <div>
-       <AppBar position="static">
+       <AppBar position="static"  style={{ background: theme_color }}>
         <Container maxWidth="xl">
             <Toolbar disableGutters>
             <Typography
@@ -84,7 +87,7 @@ const HomePage = ()=>{
                 component="div"
                 sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
             >
-                <BubbleChartIcon fontSize="large" /> {Ticker}
+                <DonutLargeIcon fontSize="large" /> <b>{Ticker.slice(0, -3)}</b>
             </Typography>
 
             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -117,8 +120,8 @@ const HomePage = ()=>{
                 }}
                 >
                     <MenuItem>
-                        <FormControl style={{color : 'white'}} variant="standard" sx={{ m: 1, minWidth: 200, maxWidth : 300 }}>
-                            <InputLabel style={{color : 'black'}} id="demo-simple-select-helper-label">Ticker</InputLabel>
+                        <FormControl style={{color : 'white'}} variant="filled" sx={{ m: 1, minWidth: 200, maxWidth : 300 }}>
+                            <InputLabel style={{color : theme_color}} id="demo-simple-select-helper-label">Ticker</InputLabel>
                             <Select
                             value={Ticker}
                             onChange={e=>{
@@ -130,8 +133,8 @@ const HomePage = ()=>{
                             inputProps={{ 'aria-label': 'Without label' }}
                             >
                             {Companies.map(company => (
-                                <MenuItem key={company} style={{color : 'black'}} value={company}>
-                                    <Typography style={{color : 'black'}}>{company}</Typography>
+                                <MenuItem key={company} style={{color : theme_color}} value={company}>
+                                    <Typography style={{color : theme_color}}>{company}</Typography>
                                 </MenuItem>
                             ))}
                             </Select>
@@ -145,23 +148,24 @@ const HomePage = ()=>{
                 component="div"
                 sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}
             >
-                <BubbleChartIcon fontSize="large" />  {Ticker}
+                <DonutLargeIcon fontSize="large" />  <b>{Ticker.slice(0, -3)}</b>
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                <FormControl style={{color : 'white'}} variant="standard" sx={{ m: 1, minWidth: 200, maxWidth : 300 }}>
-                    <InputLabel style={{color : 'black'}} id="demo-simple-select-helper-label">Ticker</InputLabel>
+                <FormControl style={{backgroundColor : theme_color2, borderRadius : "200px 200px 200px 200px"}} variant="filled" sx={{ m: 1, minWidth: 200, maxWidth : 300 }}>
+                    <InputLabel style={{color : app_bar_text}} id="demo-simple-select-helper-label"><b>Ticker</b></InputLabel>
                     <Select
                     value={Ticker}
                     onChange={e=>{
                         setTicker(e.target.value);
                         getData(e.target.value);
                     }}
+                    style={{backgroundColor : theme_color2}}
                     displayEmpty
                     inputProps={{ 'aria-label': 'Without label' }}
                     >
                     {Companies.map(company => (
-                        <MenuItem key={company} style={{color : 'black'}} value={company}>
-                            <Typography style={{color : 'black'}}>{company}</Typography>
+                        <MenuItem key={company} style={{backgroundColor : theme_color2}} value={company}>
+                            <Typography style={{color : app_bar_text}}>{company}</Typography>
                         </MenuItem>
                     ))}
                     </Select>
@@ -170,7 +174,9 @@ const HomePage = ()=>{
 
             <Box sx={{ flexGrow: 0 }}>
                 <Tooltip title="Make Request">
-                    <Button style={{backgroundColor : 'green'}} size="large" variant="contained" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">REQUEST</Button>
+                    <Button style={{backgroundColor : 'green'}} size="large" variant="contained" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                        REQUEST
+                    </Button>
                 </Tooltip>
             </Box>
             </Toolbar>
@@ -199,15 +205,15 @@ const HomePage = ()=>{
             </Paper>
         </div>
         <div className="App">
-            <Grid container spacing={2}>
-                <Grid item xs={12} md={6} lg={6}>
+            <Grid container spacing={1}>
+                <Grid item xs={12} md={7} lg={7}>
                     <Paper elevation={4}>
                         {StockData.length > 10 ? 
                         <div>
                         <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> PAST 100 DAYS + 1 WEEK </Typography></h1>
                         <Chart
                             width={'100%'}
-                            height={'400px'}
+                            height={'450px'}
                             chartType="LineChart"
                             loader={<div>Loading Chart</div>}
                             data={StockData}
@@ -233,14 +239,14 @@ const HomePage = ()=>{
                         </div> }
                     </Paper>
                 </Grid>
-                <Grid item xs={12} md={6} lg={6}>
+                <Grid item xs={12} md={5} lg={5}>
                     <Paper elevation={4}>
                         {StockData.length > 10 ? 
                         <div>
                         <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> PAST 20 DAYS + 1 WEEK </Typography></h1>
                         <Chart
                             width={'100%'}
-                            height={'400px'}
+                            height={'350px'}
                             chartType="LineChart"
                             loader={<div>Loading Chart</div>}
                             data={Zoom}
@@ -270,24 +276,26 @@ const HomePage = ()=>{
             <div  className='m-1 p-2'>
                 <Paper elevation={3}>
                     <h1 className='pt-3'><Typography variant="h4" gutterBottom component="div"> TABLE </Typography></h1>
-                    <table className="table table-hover">
-                    <thead className='thead-dark'>
-                        <tr>
-                        <th scope="col">Date</th>
-                        <th scope="col">Actual</th>
-                        <th scope="col">Prediction</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {StockData.slice(1).map(data => (
-                            <tr key={data[0]}>
-                                <td>{data[0]}</td>
-                                <td>{data[1]}</td>
-                                <td>{data[2]}</td>
+                    <div style={{position: 'relative', height: '600px', overflow: 'auto', display : 'block'}}>
+                        <table className="table table-borderless table-bordered table-hover">
+                        <thead className='thead-dark'>
+                            <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Actual</th>
+                            <th scope="col">Prediction</th>
                             </tr>
-                        ))}
-                    </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                            {StockData.slice(1).map(data => (
+                                <tr key={data[0]}>
+                                    <th scope="row">{data[0]}</th>
+                                    <td>{data[1]}</td>
+                                    <td>{data[2]}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                        </table>
+                    </div>
                 </Paper>
             </div>
         </div>
