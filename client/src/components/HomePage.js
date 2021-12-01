@@ -5,6 +5,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import SendIcon from "@mui/icons-material/Send";
 import DonutLargeIcon from '@mui/icons-material/DonutLarge';
 import LoadingButton from '@mui/lab/LoadingButton';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import {toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -12,7 +13,7 @@ toast.configure();
 
 const HomePage = ()=>{
     const theme_color = '#2a6f97';
-    const theme_color2 = '#012a4a';
+    const theme_color2 = '#168aad';
     const app_bar_text = 'white';
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [formTicker, setFormTicker] = useState('');
@@ -174,8 +175,9 @@ const HomePage = ()=>{
 
             <Box sx={{ flexGrow: 0 }}>
                 <Tooltip title="Make Request">
-                    <Button style={{backgroundColor : 'green'}} size="large" variant="contained" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                    <Button style={{backgroundColor : 'green'}} size="medium" variant="contained" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
                         REQUEST
+                        <AddCircleIcon />
                     </Button>
                 </Tooltip>
             </Box>
