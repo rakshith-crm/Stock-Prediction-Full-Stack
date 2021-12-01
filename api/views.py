@@ -18,8 +18,8 @@ con = psycopg2.connect(
     host='127.0.0.1',
     port=5432
 )
-
-def insert_into_companies(company_name):
+@api_view(['GET'])
+def insert_into_companies(request, company_name):
     ticker = company_name.upper()
     company_name = company_name.replace('.ns', '').replace('.NS', '')
     cursor = con.cursor()
@@ -30,8 +30,8 @@ def insert_into_companies(company_name):
         print(f'New Company {company_name}')
         stock = yf.Ticker(ticker).info['regularMarketPrice'] 
         if stock==None:
-            print('Stock Does not Exist. Invalid Ticker')
-            return
+            message = 'Stock Does not Exist. Invalid Ticker'
+            return JsonResponse({'status':'false','message':message}, status=500)
         command = f'''insert into companies values('{company_name}');'''
         con.commit()
         cursor.execute(command)
@@ -42,16 +42,22 @@ def insert_into_companies(company_name):
         if trained:
             forecasted = forecast_for_ticker(ticker)
         if (trained==True and forecasted==True):
-            return True
+            message = 'Request, Succesfully processed. Reload Page'
+            return JsonResponse({'status':'true','message':message}, status=200)
         else:
-            return False
+            message = 'Unexpected Server Error!'
+            return JsonResponse({'status':'false','message':message}, status=500)
     else:
-        print('Company Already Exists')
+        message = 'Company Already Exists'
         forecast_for_ticker(ticker)
-        return False
+        return JsonResponse({'status':'false','message':message}, status=500)
 
 @api_view(['GET'])
 def select_all_from_table(request, tablename):
+    if tablename == ' ':
+        print('Tablename is Empty(Space), Sending Default table')
+        tablename = 'TATASTEEL.NS'
+
     tablename = tablename.replace('.ns', '').replace('.NS', '')
     cursor = con.cursor()
     cursor.execute(f'''select * from {tablename};''')
