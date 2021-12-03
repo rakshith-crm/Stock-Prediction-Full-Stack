@@ -13,10 +13,10 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 import sys
-import dj_database_url
-if os.getcwd() == '/app':
-    import django_heroku
-    django_heroku.settings(locals())
+# import dj_database_url
+# if os.getcwd() == '/app':
+#     import django_heroku
+#     django_heroku.settings(locals())
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'corsheaders',
-    'whitenoise.runserver_nostatic',
+    # 'whitenoise.runserver_nostatic',
 ]
 
 MIDDLEWARE = [
@@ -63,7 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'server.urls'
@@ -134,7 +134,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-DATABASES['default'].update(dj_database_url.config(conn_max_age=500, ssl_require=True))
+# DATABASES['default'].update(dj_database_url.config(conn_max_age=500, ssl_require=True))
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
@@ -153,5 +153,5 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'server/build/static')
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
