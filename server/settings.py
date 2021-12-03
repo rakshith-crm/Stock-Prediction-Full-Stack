@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-5su9biymb5fa-7)-e@o60j8mj_(m%h5g04@1*9o=2yyolgueq%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (sys.argv[1] == 'runserver')
 
-ALLOWED_HOSTS = ['http://localhost:3000','*']
+ALLOWED_HOSTS = ['http://localhost:3000','*', 'stock-pred-application.herokuapp.com/']
 
 
 # Application definition
