@@ -32,13 +32,14 @@ SECRET_KEY = 'django-insecure-5su9biymb5fa-7)-e@o60j8mj_(m%h5g04@1*9o=2yyolgueq%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (sys.argv[1] == 'runserver')
 
-ALLOWED_HOSTS = ['http://localhost:3000','*', 'stock-pred-application.herokuapp.com/']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    # 'https://stock-pred-application.herokuapp.com/'
 ]
 
 INSTALLED_APPS = [
