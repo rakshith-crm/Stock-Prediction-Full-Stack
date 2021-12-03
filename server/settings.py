@@ -141,7 +141,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'client/build/')
+STATIC_ROOT = os.path.join(BASE_DIR, 'server/build/')
 STATIC_URL = '/static/'
 
 # Default primary key field type
@@ -150,7 +150,7 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'client/build/static')
+    os.path.join(BASE_DIR, 'server/build/static')
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
