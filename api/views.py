@@ -312,9 +312,13 @@ def get_all_companies(request):
 
 
 cursor = con.cursor()
-command = 'SELECT * FROM companies;'
-cursor.execute(command)
-data = cursor.fetchall()
+try:
+    command = 'SELECT * FROM companies;'
+    cursor.execute(command)
+    data = cursor.fetchall()
+except:
+    command = 'create table companies(company_name varchar(30));'
+    data = []
 companies = []
 if(len(data)==0):
     
