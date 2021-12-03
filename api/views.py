@@ -1,6 +1,6 @@
 from typing import Counter
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpRequest
 from rest_framework.decorators import api_view
 import yfinance as yf
 import pandas as pd
@@ -60,7 +60,7 @@ def select_all_from_table(request, tablename):
 
     tablename = tablename.replace('.ns', '').replace('.NS', '')
     cursor = con.cursor()
-    cursor.execute(f'''select * from {tablename};''')
+    cursor.execute(f'''select * from {tablename} order by date;''')
     data = cursor.fetchall()[-100:]
     final = []
     final.append([{'type': 'string', 'label' : 'Date'}, 'Actual', 'Pred'])
@@ -229,10 +229,17 @@ def train_for_ticker(ticker):
     # append_to_csv(no_pred+have_pred)
 
 def forecast_for_ticker(ticker):
-
     try:
         ticker = ticker.upper()
         checking = ticker.replace('.ns', '').replace('.NS', '')
+        next_week_date = (datetime.now().date()+timedelta(7)).strftime('%Y-%m-%d')
+        cursor = con.cursor()
+        command = f'''select * from {checking} where date='{next_week_date}' ;'''
+        cursor.execute(command)
+        data = cursor.fetchall()
+        if(len(data)>0):
+            print(f'|%-14s |  True  |'%checking)
+            return False
         window_size = 10
         print('Ticker : ', ticker)
         model = tf.keras.models.load_model('./models/'+ticker+'_model.h5')
@@ -258,7 +265,6 @@ def forecast_for_ticker(ticker):
             print('Stock Price Decreasing')
 
         days = 7
-        next_week_date = datetime.now().date()+timedelta(7)
         new_forecast = series.copy()
         new_pred = []
         for iter in range(days):
@@ -271,7 +277,7 @@ def forecast_for_ticker(ticker):
         # dict_3 = {'DATE' : next_week_date.strftime('%Y-%m-%d'), ticker.upper() : np.NaN, 'PRED' : new_pred[-1]}
         insert_value(ticker, (dates[-1], series[-1], None))
         insert_value(ticker, (today, None, today_pred))
-        insert_value(ticker, (next_week_date.strftime('%Y-%m-%d'), None, new_pred[-1]))
+        insert_value(ticker, (next_week_date, None, new_pred[-1]))
     except:
         return False    
     return True
@@ -289,8 +295,42 @@ def get_all_companies(request):
     return JsonResponse(json_responce, safe=False)
 
 
-# today = datetime.now().date().strftime('%Y-%m-%d')
-# print(f'Today is {today}')
-# companies = get_all_companies()
-# for company in companies:
-#     forecast_for_ticker(company)
+cursor = con.cursor()
+command = 'SELECT * FROM companies;'
+cursor.execute(command)
+data = cursor.fetchall()
+companies = []
+if(len(data)==0):
+    
+    print('Major Server Error')
+    request = HttpRequest()
+    request.method = 'GET'
+    ticker = 'TATASTEEL.NS'
+    company_name = ticker.replace('.ns', '').replace('.NS', '')
+    command = f'''insert into companies values('{company_name}');'''
+    con.commit()
+    cursor.execute(command)
+    cursor.execute(f'''create table {company_name}(DATE varchar(30), ACTUAL decimal(10, 4), PRED decimal(10, 4) );''')
+    con.commit()
+    trained = train_for_ticker(ticker)
+    forecasted=False
+    if trained:
+        forecasted = forecast_for_ticker(ticker)
+    if (trained==True and forecasted==True):
+        print(f'SERVER FROM START: INITIAL {ticker} LOADED')
+    else:
+        message = 'Fatal Server Error!'
+        exit(-1)
+    command = command = 'SELECT * FROM companies;'
+    cursor.execute(command)
+    data = cursor.fetchall()
+
+for i in data:
+    companies.append(i[0].upper()+'.NS')
+print(f'''.{'-'*24}.''')
+print('|Companies\t| STATUS |')
+print(f'''|{'-'*24}|''')
+for company in companies:
+    forecast_for_ticker(company)
+print(f''':{'-'*24}:''')
+
