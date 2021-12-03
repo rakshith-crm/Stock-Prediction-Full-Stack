@@ -1,23 +1,39 @@
-from typing import Counter
-from django.shortcuts import render
 from django.http import JsonResponse, HttpRequest
 from rest_framework.decorators import api_view
 import yfinance as yf
 import pandas as pd
-import matplotlib.pyplot as plt
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 import tensorflow as tf
 import numpy as np
-import os.path
 import psycopg2
-import asyncio
-con = psycopg2.connect(
+import urllib.parse as urlparse
+from server.settings import DATABASE_URL, DEBUG
+
+if(DEBUG):
+    con = psycopg2.connect(
     database='STOCKS',
     user = 'postgres',
     password='arra1902',
     host='127.0.0.1',
     port=5432
 )
+else:
+    result = urlparse.urlparse(DATABASE_URL)
+    username = result.username
+    password = result.password
+    database = result.path[1:]
+    hostname = result.hostname
+    port = result.port
+    con = psycopg2.connect(
+    database = database,
+    user = username,
+    password = password,
+    host = hostname,
+    port = port
+)
+
+
+
 @api_view(['GET'])
 def insert_into_companies(request, company_name):
     ticker = company_name.upper()
@@ -327,6 +343,7 @@ if(len(data)==0):
 
 for i in data:
     companies.append(i[0].upper()+'.NS')
+
 print(f'''.{'-'*24}.''')
 print('|Companies\t| STATUS |')
 print(f'''|{'-'*24}|''')

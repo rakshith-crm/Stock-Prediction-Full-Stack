@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
+import dj_database_url
+if os.getcwd() == '/app':
+    import django_heroku
+    django_heroku.settings(locals())
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,15 +30,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-5su9biymb5fa-7)-e@o60j8mj_(m%h5g04@1*9o=2yyolgueq%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (sys.argv[1] == 'runserver')
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['http://localhost:3000','*']
 
 
 # Application definition
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
-    'http://127.0.0.1:3000'
+    'http://127.0.0.1:3000',
 ]
 
 INSTALLED_APPS = [
@@ -44,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'corsheaders',
+    'whitenoise.runserver_nostatic',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'server.urls'
@@ -91,7 +99,8 @@ DATABASES = {
     }
 }
 
-print(BASE_DIR)
+DATABASE_URL = os.getenv('DATABASE_URL')
+# SECRET_KEY = os.getenv('SECRET_KEY')
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -125,10 +134,14 @@ USE_L10N = True
 
 USE_TZ = True
 
+DATABASES['default'].update(dj_database_url.config(conn_max_age=500, ssl_require=True))
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'client/build/')
 STATIC_URL = '/static/'
 
 # Default primary key field type
@@ -139,3 +152,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'client/build/static')
 ]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
