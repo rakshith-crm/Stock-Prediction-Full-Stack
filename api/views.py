@@ -9,6 +9,8 @@ import psycopg2
 import urllib.parse as urlparse
 from server.settings import DATABASE_URL, DEBUG
 
+window_size = 100
+
 if(DEBUG):
     con = psycopg2.connect(
     database='STOCKS',
@@ -38,7 +40,7 @@ else:
 def insert_into_companies(request, company_name):
 
     ticker = company_name.upper()
-    company_name = company_name.replace('.ns', '').replace('.NS', '')
+    company_name = company_name.upper().replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
     cursor = con.cursor()
     command = f'''select * from companies where company_name='{company_name}';'''
     cursor.execute(command)
@@ -100,7 +102,7 @@ def select_all_from_table(request, tablename):
     return JsonResponse(json_response, safe=False)
 
 def insert_value(company_name, tuple):
-    company_name = company_name.replace('.ns', '').replace('.NS', '')
+    company_name = company_name.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
     cursor = con.cursor()
     date, actual, pred = tuple
     if pred is None:
@@ -123,7 +125,7 @@ def insert_value(company_name, tuple):
     con.commit()
 
 def is_company(tablename):
-    tablename = tablename.replace('.ns', '').replace('.NS', '')
+    tablename = tablename.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
     cursor = con.cursor()
     cursor.execute(f'''select * from companies where company_name='{tablename}' ;''')
     data = cursor.fetchall()
@@ -164,11 +166,11 @@ def windowed_dataset(series, window_size, batch_size, shuffler):
 
 def train_for_ticker(ticker):
     ticker = ticker.upper()
-    checking = ticker.replace('.ns', '').replace('.NS', '')
+    checking = ticker.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
     print('Ticker : ', ticker)
     today = datetime.now().date().strftime('%Y-%m-%d')
     try:
-        stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
+        stock_price = yf.Ticker(ticker).history(start='2020-01-01', end=today).Close
     except:
         print('Stock Not Found')
         return False
@@ -178,11 +180,10 @@ def train_for_ticker(ticker):
     dates = np.array([time.strftime('%Y-%m-%d') for time in stock_price.index])
     print(stock_price)
 
-    window_size = 10
     batch_size = 12
     shuffler = 1000
 
-    dataset = windowed_dataset(series, window_size, batch_size, shuffler)
+    dataset = windowed_dataset(series[:365], window_size, batch_size, shuffler)
     print(dataset)
 
     model = tf.keras.models.Sequential([
@@ -248,7 +249,7 @@ def train_for_ticker(ticker):
 def forecast_for_ticker(ticker):
     try:
         ticker = ticker.upper()
-        checking = ticker.replace('.ns', '').replace('.NS', '')
+        checking = ticker.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
         next_week_date = (datetime.now().date()+timedelta(7)).strftime('%Y-%m-%d')
         cursor = con.cursor()
         command = f'''select * from {checking} where date='{next_week_date}' ;'''
@@ -260,7 +261,6 @@ def forecast_for_ticker(ticker):
             return False
         else:
             print(f'|%-14s |  False  |'%checking)
-        window_size = 10
         model = tf.keras.models.load_model('./models/'+checking+'_model.h5')
         today = datetime.now().date().strftime('%Y-%m-%d')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
