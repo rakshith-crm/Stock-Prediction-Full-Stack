@@ -36,6 +36,7 @@ else:
 
 @api_view(['GET'])
 def insert_into_companies(request, company_name):
+
     ticker = company_name.upper()
     company_name = company_name.replace('.ns', '').replace('.NS', '')
     cursor = con.cursor()
@@ -199,7 +200,7 @@ def train_for_ticker(ticker):
     model.compile(loss='mse', optimizer=tf.keras.optimizers.SGD(learning_rate=lr, momentum=0.9))
     model.fit(dataset, epochs=epochs)
 
-    model.save('./models/'+ticker+'_model.h5')
+    model.save('./models/'+checking+'_model.h5')
 
     forecast = []
 
@@ -212,7 +213,7 @@ def train_for_ticker(ticker):
     # plt.figure(figsize=(24, 12))
     # plt.show()
     today = datetime.now().date().strftime('%Y-%m-%d')
-    model = tf.keras.models.load_model('./models/'+ticker+'_model.h5')
+    model = tf.keras.models.load_model('./models/'+checking+'_model.h5')
     # stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
     # print(stock_price)
     # dates = np.array([time.strftime('%Y-%m-%d') for time in stock_price.index])
@@ -251,16 +252,20 @@ def forecast_for_ticker(ticker):
         next_week_date = (datetime.now().date()+timedelta(7)).strftime('%Y-%m-%d')
         cursor = con.cursor()
         command = f'''select * from {checking} where date='{next_week_date}' ;'''
+        # print(command)
         cursor.execute(command)
         data = cursor.fetchall()
         if(len(data)>0):
-            print(f'|%-14s |  True  |'%checking)
+            print(f'|%-14s |  True   |'%checking)
             return False
+        else:
+            print(f'|%-14s |  False  |'%checking)
         window_size = 10
-        print('Ticker : ', ticker)
-        model = tf.keras.models.load_model('./models/'+ticker+'_model.h5')
+        model = tf.keras.models.load_model('./models/'+checking+'_model.h5')
         today = datetime.now().date().strftime('%Y-%m-%d')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
+        if len(stock_price)==0:
+            stock_price = yf.Ticker(checking).history(start='2021-01-01', end=today).Close
         series = np.array(stock_price)
         dates = np.array([time.strftime('%Y-%m-%d') for time in stock_price.index])
 
@@ -348,10 +353,10 @@ if(len(data)==0):
 for i in data:
     companies.append(i[0].upper()+'.NS')
 
-print(f'''.{'-'*24}.''')
-print('|Companies\t| STATUS |')
-print(f'''|{'-'*24}|''')
+print(f'''.{'-'*25}.''')
+print('|Companies\t| STATUS  |')
+print(f'''|{'-'*25}|''')
 for company in companies:
     forecast_for_ticker(company)
-print(f''':{'-'*24}:''')
+print(f''':{'-'*25}:''')
 

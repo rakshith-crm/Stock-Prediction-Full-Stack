@@ -34,7 +34,7 @@ SECRET_KEY = "{{ secret_key }}"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (sys.argv[1] == 'runserver')
-
+# DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 
