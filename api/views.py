@@ -34,6 +34,8 @@ else:
     port = port
 )
 
+predict_till = 50
+get_last = 400 # days
 
 
 @api_view(['GET'])
@@ -76,11 +78,11 @@ def select_all_from_table(request, tablename):
     if tablename == ' ':
         print('Tablename is Empty(Space), Sending Default table')
         tablename = 'TATASTEEL.NS'
-
+    tablename = tablename.upper()
     tablename = tablename.replace('.ns', '').replace('.NS', '')
     cursor = con.cursor()
     cursor.execute(f'''select * from {tablename} order by date;''')
-    data = cursor.fetchall()[-100:]
+    data = cursor.fetchall()[-get_last:]
     final = []
     final.append([{'type': 'string', 'label' : 'Date'}, 'Actual', 'Pred'])
     for i in range(len(data)):
@@ -97,8 +99,13 @@ def select_all_from_table(request, tablename):
         final.append(f)
     zoom = []
     zoom.append([{'type': 'string', 'label' : 'Date'}, 'Actual', 'Pred'])
-    zoom = zoom + final[-20:]
-    json_response = {"data" : final, "zoom" : zoom}
+    zoom = zoom + final[-2*predict_till:]
+    json_response = {
+        "data" : final, 
+        "zoom" : zoom, 
+        "main_title" : f'PAST {get_last} DAYS + {predict_till} DAYS ',
+        "sub_title" : f'PAST {predict_till} DAYS + {predict_till} DAYS ',
+        }
     return JsonResponse(json_response, safe=False)
 
 def insert_value(company_name, tuple):
@@ -250,7 +257,7 @@ def forecast_for_ticker(ticker):
     try:
         ticker = ticker.upper()
         checking = ticker.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
-        next_week_date = (datetime.now().date()+timedelta(7)).strftime('%Y-%m-%d')
+        next_week_date = (datetime.now().date()+timedelta(predict_till-1)).strftime('%Y-%m-%d')
         cursor = con.cursor()
         command = f'''select * from {checking} where date='{next_week_date}' ;'''
         # print(command)
@@ -284,21 +291,26 @@ def forecast_for_ticker(ticker):
             print('Stock Price Increasing')
         else:
             print('Stock Price Decreasing')
+        # Insert yesterday's actual price and today's prediction
+        insert_value(ticker, (dates[-1], series[-1], None))
+        insert_value(ticker, (today, None, today_pred))
 
-        days = 7
+        days = predict_till
         new_forecast = series.copy()
         new_pred = []
         for iter in range(days):
             val = model.predict(np.expand_dims(new_forecast[-window_size:], axis=0))[0][0]
             new_forecast = np.append(new_forecast, [val], axis=0)
             new_pred.append(val)
+            if iter>0:
+                iter_date = (datetime.now().date()+timedelta(iter)).strftime('%Y-%m-%d')
+                insert_value(ticker, (iter_date, None, val))
         # train_data = windowed_dataset(series[-12:], window_size=window_size, batch_size=1, shuffler=2)
         # dict_ = {'DATE' : dates[-1], ticker.upper() : series[-1], 'PRED' : np.NaN}
         # dict_2 = {'DATE' : today, ticker.upper() : np.NaN, 'PRED' : today_pred}
         # dict_3 = {'DATE' : next_week_date.strftime('%Y-%m-%d'), ticker.upper() : np.NaN, 'PRED' : new_pred[-1]}
-        insert_value(ticker, (dates[-1], series[-1], None))
-        insert_value(ticker, (today, None, today_pred))
-        insert_value(ticker, (next_week_date, None, new_pred[-1]))
+
+        # insert_value(ticker, (next_week_date, None, new_pred[-1]))
     except:
         return False    
     return True

@@ -22,6 +22,10 @@ const HomePage = ()=>{
     var [Zoom, setZoom] = useState([]);
     var [Ticker, setTicker] = useState(' ');
     var [Companies, setCompanies] = useState([]);
+    var [MainTitle, setMainTitle] = useState('');
+    var [SubTitle, setSubTitle] = useState('');
+
+
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
       };
@@ -36,7 +40,10 @@ const HomePage = ()=>{
             const data = await query.json();
             setStockData(data.data);
             setZoom(data.zoom);
+            setMainTitle(data.main_title);
+            setSubTitle(data.sub_title);
             console.log(data.data);
+            console.log(data.zoom);
             console.log(StockData);
         } catch (error) {
             console.log(error.message);
@@ -207,99 +214,97 @@ const HomePage = ()=>{
             </Paper>
         </div>
         <div className="App">
+            <Paper elevation={4}>
+                {StockData.length > 10 ? 
+                <div>
+                    <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> {MainTitle} </Typography></h1>
+                    <Chart
+                        width={'100%'}
+                        height={'500px'}
+                        chartType="AreaChart"
+                        loader={<div>Loading Chart</div>}
+                        data={StockData}
+                        options={{
+                            hAxis: {
+                                title: 'Date',  
+                            },
+                            vAxis: {
+                                title: 'Stock Price',
+                            },
+                            series: {
+                                1: { curveType: 'function' },
+                            },
+                        }}
+                        rootProps={{ 'data-testid': '4' }}
+                    />
+                </div> : 
+                <div>
+                    <h1>Waiting...</h1>
+                </div> 
+                }
+            </Paper>
             <Grid container spacing={1}>
-                <Grid item xs={12} md={7} lg={7}>
+                <Grid item xs={12} md={6} lg={6}>
                     <Paper elevation={4}>
-                        {StockData.length > 10 ? 
-                        <div>
-                        <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> PAST 100 DAYS + 1 WEEK </Typography></h1>
-                        <Chart
-                            width={'100%'}
-                            height={'450px'}
-                            chartType="LineChart"
-                            loader={<div>Loading Chart</div>}
-                            data={StockData}
-                            options={{
-                                hAxis: {
-                                title: 'Date',
-                                
-                                },
-                                vAxis: {
-                                title: 'Stock Price',
-                                },
-                                series: {
-                                1: { curveType: 'function' },
-                                },
-                            }}
-                            rootProps={{ 'data-testid': '2' }}
-                            />
-                        <div>
-                        </div>
-                        </div> : 
-                        <div>
-                        <h1>Waiting...</h1>
-                        </div> }
+                                {StockData.length > 10 ? 
+                                <div>
+                                <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> {SubTitle} </Typography></h1>
+                                <Chart
+                                    width={'100%'}
+                                    height={'500px'}
+                                    chartType="AreaChart"
+                                    loader={<div>Loading Chart</div>}
+                                    data={Zoom}
+                                    options={{
+                                        hAxis: {
+                                        title: 'Date',
+                                        
+                                        },
+                                        vAxis: {
+                                        title: 'Stock Price',
+                                        },
+                                        series: {
+                                        1: { curveType: 'function' },
+                                        },
+                                    }}
+                                    rootProps={{ 'data-testid': '2' }}
+                                    />
+                                <div>
+                                </div>
+                                </div> : 
+                                <div>
+                                <h1>Waiting...</h1>
+                                </div> }
                     </Paper>
                 </Grid>
-                <Grid item xs={12} md={5} lg={5}>
-                    <Paper elevation={4}>
-                        {StockData.length > 10 ? 
-                        <div>
-                        <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> PAST 20 DAYS + 1 WEEK </Typography></h1>
-                        <Chart
-                            width={'100%'}
-                            height={'350px'}
-                            chartType="LineChart"
-                            loader={<div>Loading Chart</div>}
-                            data={Zoom}
-                            options={{
-                                hAxis: {
-                                title: 'Date',
-                                
-                                },
-                                vAxis: {
-                                title: 'Stock Price',
-                                },
-                                series: {
-                                1: { curveType: 'function' },
-                                },
-                            }}
-                            rootProps={{ 'data-testid': '2' }}
-                            />
-                        <div>
-                        </div>
-                        </div> : 
-                        <div>
-                        <h1>Waiting...</h1>
-                        </div> }
-                    </Paper>
-                </Grid>
-            </Grid>
-            <div  className='m-1 p-2'>
-                <Paper elevation={3}>
-                    <h1 className='pt-3'><Typography variant="h4" gutterBottom component="div"> TABLE </Typography></h1>
-                    <div style={{position: 'relative', height: '600px', overflow: 'auto', display : 'block'}}>
-                        <table className="table table-borderless table-bordered table-hover">
-                        <thead className='thead-dark'>
-                            <tr>
-                            <th scope="col">Date</th>
-                            <th scope="col">Actual</th>
-                            <th scope="col">Prediction</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {StockData.slice(1).map(data => (
-                                <tr key={data[0]}>
-                                    <th scope="row">{data[0]}</th>
-                                    <td>{data[1]}</td>
-                                    <td>{data[2]}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                        </table>
+                <Grid item xs={12} md={6} lg={6}>
+                    <div  className='m-2 p-2'>
+                        <Paper elevation={3}>
+                            <h1 className='pt-3'><Typography variant="h4" gutterBottom component="div"> TABLE </Typography></h1>
+                            <div style={{position: 'relative', height: '500px', overflow: 'auto', display : 'block'}}>
+                                <table className="table table-borderless table-bordered table-hover">
+                                <thead className='thead-dark'>
+                                    <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Actual</th>
+                                    <th scope="col">Prediction</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {StockData.slice(1).map(data => (
+                                        <tr key={data[0]}>
+                                            <th scope="row">{data[0]}</th>
+                                            <td>{data[1]}</td>
+                                            <td>{data[2]}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                </table>
+                            </div>
+                        </Paper>
                     </div>
-                </Paper>
-            </div>
+                </Grid> 
+            </Grid>
         </div>
         </div>
     );
