@@ -8,6 +8,10 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import {toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import EmailIcon from '@mui/icons-material/Email';
+import StarIcon from '@mui/icons-material/Star';
 
 toast.configure();
 
@@ -214,7 +218,7 @@ const HomePage = ()=>{
             </Paper>
         </div>
         <div className="App">
-            <Paper elevation={4}>
+            <Paper elevation={5}>
                 {StockData.length > 10 ? 
                 <div>
                     <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> {MainTitle} </Typography></h1>
@@ -245,7 +249,7 @@ const HomePage = ()=>{
             </Paper>
             <Grid container spacing={1}>
                 <Grid item xs={12} md={6} lg={6}>
-                    <Paper elevation={4}>
+                    <Paper elevation={5}>
                                 {StockData.length > 10 ? 
                                 <div>
                                 <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> {SubTitle} </Typography></h1>
@@ -279,7 +283,7 @@ const HomePage = ()=>{
                 </Grid>
                 <Grid item xs={12} md={6} lg={6}>
                     <div  className='m-2 p-2'>
-                        <Paper elevation={3}>
+                        <Paper elevation={5}>
                             <h1 className='pt-3'><Typography variant="h4" gutterBottom component="div"> TABLE </Typography></h1>
                             <div style={{position: 'relative', height: '500px', overflow: 'auto', display : 'block'}}>
                                 <table className="table table-borderless table-bordered table-hover">
@@ -306,6 +310,33 @@ const HomePage = ()=>{
                 </Grid> 
             </Grid>
         </div>
+        {/* <hr /> */}
+        <footer class="App pt-4 pb-1" style={{backgroundColor : theme_color}}>
+            <div class="container">
+                <div class="row">
+                    <div class="">
+                        <Typography variant='h4' className='mb-2'>Contact Us</Typography>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <a href='https://github.com/rakshith-crm' target="_blank" rel="noreferrer">
+                            <GitHubIcon className='icon m-1' fontSize='large' sx={{color : '#212529'}} />
+                        </a>
+                        <a  href='https://www.linkedin.com/in/rakshith-crm/' target="_blank" rel="noreferrer">
+                            <LinkedInIcon  className='icon m-1' fontSize='large' sx={{color : '#212529'}} />
+                        </a>
+                        <a href='mailto:rakshithcrm@gmail.com' target="_blank" rel="noreferrer">
+                            <EmailIcon className='icon m-1' fontSize='large' sx={{color : '#212529'}} />
+                        </a>
+                    </div>
+                    <Typography variant='h5' class="mt-4 mb-5" sx={{ fontWeight: 'light', fontFamily: 'Monospace', letterSpacing: 3  }} >
+                        <StarIcon sx={{color : '#212529'}} /> 
+                            Rakshith C.R.M
+                        <StarIcon sx={{color : '#212529'}} />
+                    </Typography>
+                </div>
+            </div>
+        </footer>
+
         </div>
     );
 }
