@@ -99,7 +99,7 @@ const HomePage = ()=>{
                 component="div"
                 sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
             >
-                <DonutLargeIcon fontSize="large" /> <b>{Ticker.slice(0, -3)}</b>
+                <DonutLargeIcon fontSize="large" />
             </Typography>
 
             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -146,7 +146,7 @@ const HomePage = ()=>{
                             >
                             {Companies.map(company => (
                                 <MenuItem key={company} style={{color : theme_color}} value={company}>
-                                    <Typography style={{color : theme_color}}>{company}</Typography>
+                                    <Typography style={{color : theme_color}}>{company.slice(0, -3)}</Typography>
                                 </MenuItem>
                             ))}
                             </Select>
@@ -163,21 +163,21 @@ const HomePage = ()=>{
                 <DonutLargeIcon fontSize="large" />  <b>{Ticker.slice(0, -3)}</b>
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                <FormControl style={{backgroundColor : theme_color2, borderRadius : "200px 200px 200px 200px"}} variant="filled" sx={{ m: 1, minWidth: 200, maxWidth : 300 }}>
-                    <InputLabel style={{color : app_bar_text}} id="demo-simple-select-helper-label"><b>Ticker</b></InputLabel>
+                <FormControl variant="standard" sx={{ m: 1, minWidth: 200, maxWidth : 500 }}>
+                    {/* <InputLabel style={{color : app_bar_text}} id="demo-simple-select-helper-label"><b>Ticker</b></InputLabel> */}
                     <Select
                     value={Ticker}
                     onChange={e=>{
                         setTicker(e.target.value);
                         getData(e.target.value);
                     }}
-                    style={{backgroundColor : theme_color2}}
+                
                     displayEmpty
                     inputProps={{ 'aria-label': 'Without label' }}
                     >
                     {Companies.map(company => (
                         <MenuItem key={company} style={{backgroundColor : theme_color2}} value={company}>
-                            <Typography style={{color : app_bar_text}}>{company}</Typography>
+                            <Typography style={{color : app_bar_text, fontSize : '20px'}}>{company.slice(0, -3)}</Typography>
                         </MenuItem>
                     ))}
                     </Select>
