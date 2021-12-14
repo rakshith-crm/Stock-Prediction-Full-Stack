@@ -36,7 +36,7 @@ else:
 
 predict_till = 50
 get_last = 400 # days
-
+rewrite_last = 10
 
 @api_view(['GET'])
 def insert_into_companies(request, company_name):
@@ -272,10 +272,15 @@ def forecast_for_ticker(ticker):
         today = datetime.now().date().strftime('%Y-%m-%d')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
         if len(stock_price)==0:
+            print(f'trying {checking} ticker...')
             stock_price = yf.Ticker(checking).history(start='2021-01-01', end=today).Close
         series = np.array(stock_price)
-        dates = np.array([time.strftime('%Y-%m-%d') for time in stock_price.index])
 
+        dates = np.array([time.strftime('%Y-%m-%d') for time in stock_price.index])
+        # Check Past Actual values are set
+        for i in range(rewrite_last):
+            # print(f'{ticker}, ({dates[-2-i]}, {series[-2-i]}, None)')
+            insert_value(ticker, (dates[-2-i], series[-2-i], None))
         # data = windowed_dataset(series[-8:], window_size, batch_size, None)
 
         print('''Yesterday's Stock Value \t: ''', series[-1], ' - ', dates[-1])
@@ -327,6 +332,9 @@ def get_all_companies(request):
     json_responce = {'data' : companies};
     return JsonResponse(json_responce, safe=False)
 
+
+today = datetime.now().date().strftime('%Y-%m-%d')
+print('Today : ', today)
 
 cursor = con.cursor()
 try:
