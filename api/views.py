@@ -192,23 +192,25 @@ def train_for_ticker(ticker):
 
     dataset = windowed_dataset(series[:365], window_size, batch_size, shuffler)
     print(dataset)
+    try:
+        model = tf.keras.models.load_model('./models/'+checking+'_model.h5')
+    except:
+        model = tf.keras.models.Sequential([
+            tf.keras.layers.Dense(64, activation='relu', input_shape=[window_size]),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(1000, activation='relu'),
+            tf.keras.layers.Dense(1000, activation='relu'),
+            tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dense(1),
+            # tf.keras.layers.Lambda(lambda x : x+1000.0)
+        ])
+        lr = 1e-8
+        epochs = 500
 
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(64, activation='relu', input_shape=[window_size]),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dense(1000, activation='relu'),
-        tf.keras.layers.Dense(1000, activation='relu'),
-        tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(1),
-        # tf.keras.layers.Lambda(lambda x : x+1000.0)
-    ])
-    lr = 1e-8
-    epochs = 500
+        model.compile(loss='mse', optimizer=tf.keras.optimizers.SGD(learning_rate=lr, momentum=0.9))
+        model.fit(dataset, epochs=epochs)
 
-    model.compile(loss='mse', optimizer=tf.keras.optimizers.SGD(learning_rate=lr, momentum=0.9))
-    model.fit(dataset, epochs=epochs)
-
-    model.save('./models/'+checking+'_model.h5')
+        model.save('./models/'+checking+'_model.h5')
 
     forecast = []
 
