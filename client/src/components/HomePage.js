@@ -16,6 +16,7 @@ import StarIcon from '@mui/icons-material/Star';
 toast.configure();
 
 const HomePage = ()=>{
+    let [NoOfFetches, setFetches] = useState(0);
     const theme_color = '#2a6f97';
     const theme_color2 = '#168aad';
     const app_bar_text = 'white';
@@ -38,6 +39,14 @@ const HomePage = ()=>{
       };
     const getData = async(ticker)=>{
         try {
+            if(NoOfFetches===0){
+                toast.success(`Fetching Stock Data...Please wait might take a moment`);
+                setFetches(++NoOfFetches);
+            }
+            else {
+                toast.success(`Fetching Stock Data...${ticker}`);
+                setFetches(++NoOfFetches);
+            }
             const query = await fetch(`api/stock-data/${ticker}/`,{
                 method : 'GET'
             });
@@ -238,8 +247,15 @@ const HomePage = ()=>{
                             series: {
                                 1: { curveType: 'function' },
                             },
+                            animation: {
+                                startup: true,
+                                easing: 'linear',
+                                duration: 400,
+                            },
+                            colors: ['#1a535c', '#4ecdc4'],
+                            backgroundColor : 'white'
                         }}
-                        rootProps={{ 'data-testid': '4' }}
+                        rootProps={{ 'data-testid': '1' }}
                     />
                 </div> : 
                 <div>
@@ -270,6 +286,13 @@ const HomePage = ()=>{
                                         series: {
                                         1: { curveType: 'function' },
                                         },
+                                        animation: {
+                                            startup: true,
+                                            easing: 'linear',
+                                            duration: 800,
+                                        },
+                                        colors: ['#a41623', '#ef476f'],
+                                        backgroundColor : 'white'
                                     }}
                                     rootProps={{ 'data-testid': '2' }}
                                     />
@@ -311,7 +334,7 @@ const HomePage = ()=>{
             </Grid>
         </div>
         {/* <hr /> */}
-        <footer class="App pt-4 pb-1" style={{backgroundColor : theme_color}}>
+        <footer class="App pt-4" style={{backgroundColor : '#0096c7'}}>
             <div class="container">
                 <div class="row">
                     <div class="">
@@ -328,7 +351,7 @@ const HomePage = ()=>{
                             <EmailIcon className='icon m-1' fontSize='large' sx={{color : '#212529'}} />
                         </a>
                     </div>
-                    <Typography variant='h5' class="mt-4 mb-5" sx={{ fontWeight: 'light', fontFamily: 'Monospace', letterSpacing: 3  }} >
+                    <Typography variant='h5' className="mt-4 mb-3" sx={{ fontWeight: 'light', fontFamily: 'Monospace', letterSpacing: 3  }} >
                         <StarIcon sx={{color : '#212529'}} /> 
                             Rakshith C.R.M
                         <StarIcon sx={{color : '#212529'}} />

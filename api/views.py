@@ -8,6 +8,7 @@ import numpy as np
 import psycopg2
 import urllib.parse as urlparse
 from server.settings import DATABASE_URL, DEBUG
+import os
 
 window_size = 100
 
@@ -40,7 +41,6 @@ rewrite_last = 10
 
 @api_view(['GET'])
 def insert_into_companies(request, company_name):
-
     ticker = company_name.upper()
     company_name = company_name.upper().replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
     cursor = con.cursor()
@@ -49,10 +49,13 @@ def insert_into_companies(request, company_name):
     data = cursor.fetchall()
     if(len(data)==0):
         print(f'New Company {company_name}')
-        stock = yf.Ticker(ticker).info['regularMarketPrice'] 
+        stock = yf.Ticker(ticker).info['regularMarketPrice']
+        print('Ticker found ', ticker)
         if stock==None:
-            message = 'Stock Does not Exist. Invalid Ticker'
-            return JsonResponse({'status':'false','message':message}, status=500)
+            stock = yf.Ticker(company_name).info['regularMarketPrice']
+            if stock==None:
+                message = 'Stock Does not Exist. Invalid Ticker'
+                return JsonResponse({'status':'false','message':message}, status=500)
         command = f'''insert into companies values('{company_name}');'''
         con.commit()
         cursor.execute(command)
@@ -77,7 +80,14 @@ def insert_into_companies(request, company_name):
 def select_all_from_table(request, tablename):
     if tablename == ' ':
         print('Tablename is Empty(Space), Sending Default table')
-        tablename = 'TATASTEEL.NS'
+        cursor = con.cursor()
+        command = 'SELECT * FROM companies order by company_name;'
+        cursor.execute(command)
+        data = cursor.fetchall()
+        tablename = data[0][0]
+        tk = yf.Ticker(tablename).info['regularMarketPrice']
+        if(tk==None):
+            tablename = tablename+'.NS'
     tablename = tablename.upper()
     tablename = tablename.replace('.ns', '').replace('.NS', '')
     cursor = con.cursor()
@@ -325,7 +335,7 @@ def forecast_for_ticker(ticker):
 @api_view(['GET'])
 def get_all_companies(request):
     cursor = con.cursor()
-    command = 'SELECT * FROM companies;'
+    command = 'SELECT * FROM companies order by company_name;'
     cursor.execute(command)
     data = cursor.fetchall()
     companies = []
@@ -341,14 +351,50 @@ print('Today : ', today)
 cursor = con.cursor()
 try:
     command = 'SELECT * FROM companies;'
-    cursor.execute(command)
+    try:
+        cursor.execute(command)
+    except:
+        cursor.close()
+        cursor = con.cursor()
+        command = 'create table companies(company_name varchar(30));'
+        cursor.execute(command)
+        con.commit()
+
     data = cursor.fetchall()
 except:
     command = 'create table companies(company_name varchar(30));'
+    cursor.execute(command)
+    con.commit()
     data = []
 companies = []
-if(len(data)==0):
-    
+
+models_available = os.listdir('./models')
+if(len(data)==0 and len(models_available)>0):
+    print('Pretrained models exists...\n---------------------------')
+    for ticker in models_available:
+        ticker = ticker.replace('_model.h5', '')
+        tk = yf.Ticker(ticker).info['regularMarketPrice']
+        if(tk==None):
+            print('NS Must be added for ', ticker)
+            ticker = ticker+'.NS'
+        else:
+            print('NS need not be added for ', ticker)
+        company_name = ticker.replace('.ns', '').replace('.NS', '')
+        command = f'''insert into companies values('{company_name}');'''
+        con.commit()
+        cursor.execute(command)
+        cursor.execute(f'''create table {company_name}(DATE varchar(30), ACTUAL decimal(10, 4), PRED decimal(10, 4) );''')
+        con.commit()
+        trained = train_for_ticker(ticker)
+        forecasted=False
+        if trained:
+            forecasted = forecast_for_ticker(ticker)
+        if (trained==True and forecasted==True):
+            print(f'SERVER FROM START: INITIAL {ticker} LOADED')
+        else:
+            message = 'Fatal Server Error!'
+            exit(-1)
+elif(len(data)==0 and len(models_available)==0):
     print('Major Server Error')
     request = HttpRequest()
     request.method = 'GET'
@@ -368,9 +414,10 @@ if(len(data)==0):
     else:
         message = 'Fatal Server Error!'
         exit(-1)
-    command = command = 'SELECT * FROM companies;'
-    cursor.execute(command)
-    data = cursor.fetchall()
+
+command = command = 'SELECT * FROM companies;'
+cursor.execute(command)
+data = cursor.fetchall()
 
 for i in data:
     companies.append(i[0].upper()+'.NS')
