@@ -1,3 +1,4 @@
+import json
 from django.http import JsonResponse, HttpRequest
 from rest_framework.decorators import api_view
 import yfinance as yf
@@ -9,6 +10,7 @@ import psycopg2
 import urllib.parse as urlparse
 from server.settings import DATABASE_URL, DEBUG
 import os
+import requests
 
 window_size = 100
 
@@ -56,6 +58,29 @@ def insert_into_companies(request, company_name):
             if stock==None:
                 message = 'Stock Does not Exist. Invalid Ticker'
                 return JsonResponse({'status':'false','message':message}, status=500)
+        if DEBUG==False:
+            url = os.environ['TRUSTIFI_URL']+'/api/i/v1/email'
+            to = 'rakshithcrm@gmail.com'
+            payload = {
+                'recipients' : [{'email' : to}],
+                'title' : f'Stock Request - Ticker : ${ticker}',
+                'html' : f'''
+                    <h2>Requesting for stock ${ticker} at time ${datetime.today()}</h2>
+                    <br />
+                    Thank You
+                    Rakshith C.R.M
+                '''
+            }
+            payload = json.dumps(payload)
+
+            headers = {
+            'x-trustifi-key': os.environ['TRUSTIFI_KEY'],
+            'x-trustifi-secret': os.environ['TRUSTIFI_SECRET'],
+            'Content-Type': 'application/json'
+            }
+            response = requests.request('POST', url, headers = headers, data = payload)
+            print(response.json())
+
         command = f'''insert into companies values('{company_name}');'''
         con.commit()
         cursor.execute(command)
@@ -310,7 +335,8 @@ def forecast_for_ticker(ticker):
             print('Stock Price Decreasing')
         # Insert yesterday's actual price and today's prediction
         insert_value(ticker, (dates[-1], series[-1], None))
-        insert_value(ticker, (today, None, today_pred))
+        if not is_holiday(today):
+            insert_value(ticker, (today, None, today_pred))
 
         days = predict_till
         new_forecast = series.copy()
@@ -321,7 +347,8 @@ def forecast_for_ticker(ticker):
             new_pred.append(val)
             if iter>0:
                 iter_date = (datetime.now().date()+timedelta(iter)).strftime('%Y-%m-%d')
-                insert_value(ticker, (iter_date, None, val))
+                if not is_holiday(iter_date):
+                    insert_value(ticker, (iter_date, None, val))
         # train_data = windowed_dataset(series[-12:], window_size=window_size, batch_size=1, shuffler=2)
         # dict_ = {'DATE' : dates[-1], ticker.upper() : series[-1], 'PRED' : np.NaN}
         # dict_2 = {'DATE' : today, ticker.upper() : np.NaN, 'PRED' : today_pred}
@@ -344,9 +371,18 @@ def get_all_companies(request):
     json_responce = {'data' : companies};
     return JsonResponse(json_responce, safe=False)
 
+def is_holiday(date):
+    format = '%Y-%m-%d'
+    inp_date = datetime.strptime(date, format)
+    weekday = inp_date.weekday()
+    if weekday==5 or weekday==6:
+        return True
+    return False
 
 today = datetime.now().date().strftime('%Y-%m-%d')
 print('Today : ', today)
+if is_holiday(today):
+    print('Hola! Today is a Holiday')
 
 cursor = con.cursor()
 try:
