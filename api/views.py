@@ -89,7 +89,11 @@ def insert_into_companies(request, company_name):
             if stock==None:
                 message = 'Stock Does not Exist. Invalid Ticker'
                 return JsonResponse({'status':'false','message':message}, status=500)
-        request_static_stock_mail(ticker)
+        if DEBUG==False:
+            request_static_stock_mail(ticker)
+            message = 'Admin Intimated. Please Check Back In One Day'
+            # return JsonResponse({'status':'true','message':message}, status=200)
+
         command = f'''insert into companies values('{company_name}');'''
         con.commit()
         cursor.execute(command)
