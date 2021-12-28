@@ -1,4 +1,3 @@
-import json
 from django.http import JsonResponse, HttpRequest
 from rest_framework.decorators import api_view
 import yfinance as yf
@@ -10,7 +9,9 @@ import psycopg2
 import urllib.parse as urlparse
 from server.settings import DATABASE_URL, DEBUG
 import os
-import requests
+import smtplib, ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 window_size = 100
 
@@ -41,6 +42,36 @@ predict_till = 50
 get_last = 400 # days
 rewrite_last = 10
 
+def request_static_stock_mail(ticker):
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = "pettaparaak003@gmail.com"  # Enter your address
+    receiver_email = "rakshithcrm@gmail.com"  # Enter receiver address
+    msg = MIMEMultipart('alternative')
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = f'Stock Request - {ticker}'
+    password = "wvbyqfnwbzxrhpqz"
+    html = """\
+    <html>
+    <head></head>
+    <body>
+        <p>Hi Rakshith!<br>
+        Stock Requested - <br> Server requesting static model for Stock Ticker
+        </p>
+        <br>
+        With Regards <br>
+        Stock Prediction Server :)
+    </body>
+    </html>
+    """
+    part = MIMEText(html, 'html')
+    msg.attach(part)
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+
 @api_view(['GET'])
 def insert_into_companies(request, company_name):
     ticker = company_name.upper()
@@ -58,29 +89,7 @@ def insert_into_companies(request, company_name):
             if stock==None:
                 message = 'Stock Does not Exist. Invalid Ticker'
                 return JsonResponse({'status':'false','message':message}, status=500)
-        if DEBUG==False:
-            url = os.environ['TRUSTIFI_URL']+'/api/i/v1/email'
-            to = 'rakshithcrm@gmail.com'
-            payload = {
-                'recipients' : [{'email' : to}],
-                'title' : f'Stock Request - Ticker : ${ticker}',
-                'html' : f'''
-                    <h2>Requesting for stock ${ticker} at time ${datetime.today()}</h2>
-                    <br />
-                    Thank You
-                    Rakshith C.R.M
-                '''
-            }
-            payload = json.dumps(payload)
-
-            headers = {
-            'x-trustifi-key': os.environ['TRUSTIFI_KEY'],
-            'x-trustifi-secret': os.environ['TRUSTIFI_SECRET'],
-            'Content-Type': 'application/json'
-            }
-            response = requests.request('POST', url, headers = headers, data = payload)
-            print(response.json())
-
+        request_static_stock_mail(ticker)
         command = f'''insert into companies values('{company_name}');'''
         con.commit()
         cursor.execute(command)
