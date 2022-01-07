@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import tensorflow as tf
 import numpy as np
+import json
+import re   
 import psycopg2
 import urllib.parse as urlparse
 from server.settings import DATABASE_URL, DEBUG
@@ -12,6 +14,8 @@ import os
 import smtplib, ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+import matplotlib.pyplot as plt
 
 window_size = 100
 
@@ -37,6 +41,8 @@ else:
     host = hostname,
     port = port
 )
+
+cursor = con.cursor()
 
 predict_till = 50
 get_last = 400 # days
@@ -72,12 +78,66 @@ def request_static_stock_mail(ticker):
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, msg.as_string())
 
+def check_valid_email(email):
+    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'  
+    if(re.search(regex,email)):   
+        return True
+    return False
+
+@api_view(['POST'])
+def subscribe(request, company_name):
+    company_name = company_name.upper().replace('.NS', '')
+    print(company_name)
+    body = json.loads(request.body)
+    if not check_valid_email(body['email']):
+        message = "Invalid Email! Please Enter a valid email."
+        response = JsonResponse({'status':'invalid','message':message}, status=400) 
+        return response
+    cursor = con.cursor()
+    command = f'''SELECT * FROM SUBSCRIBERS WHERE ticker='{company_name}' and email='{body['email']}' '''
+    cursor.execute(command)
+    data = cursor.fetchall()
+    if(len(data)==0):
+        command = f'''INSERT INTO SUBSCRIBERS VALUES('{body['email']}', '{company_name.upper()}')'''
+        cursor.execute(command)
+        con.commit()
+        message = {"message" : "Subscribed to {company_name}. Thank You :D"}
+        response = JsonResponse({'status':'true','message':message}, status=200)
+    else:
+        message = f"You are already Subscribed to the Company {company_name}."
+        response = JsonResponse({'status':'false','message':message}, status=500)   
+    return response
+
+@api_view(['DELETE'])
+def unsubscribe(request, company_name):
+    company_name = company_name.upper().replace('.NS', '')
+    print(company_name)
+    body = json.loads(request.body)
+    if not check_valid_email(body['email']):
+        message = "Invalid Email! Please Enter a valid email."
+        response = JsonResponse({'status':'invalid','message':message}, status=400) 
+        return response
+    cursor = con.cursor()
+    command = f'''SELECT * FROM SUBSCRIBERS WHERE ticker='{company_name}' and email='{body['email']}' '''
+    cursor.execute(command)
+    data = cursor.fetchall()
+    if(len(data)>0):
+        command = f'''DELETE FROM SUBSCRIBERS WHERE email='{body['email']}' and ticker='{company_name.upper()}' '''
+        cursor.execute(command)
+        con.commit()
+        message = {"message" : "Unsubscribed to {company_name}. If possible take your time and email me on what went wrong :D"}
+        response = JsonResponse({'status':'true','message':message}, status=200)
+    else:
+        message = f"You gotta subscribe first to Unsubscribe. :D"
+        response = JsonResponse({'status':'false','message':message}, status=500)   
+    return response
+
 @api_view(['GET'])
 def insert_into_companies(request, company_name):
     ticker = company_name.upper()
     company_name = company_name.upper().replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
-    cursor = con.cursor()
     command = f'''select * from companies where company_name='{company_name}';'''
+    cursor = con.cursor()
     cursor.execute(command)
     data = cursor.fetchall()
     if(len(data)==0):
@@ -95,7 +155,6 @@ def insert_into_companies(request, company_name):
             # return JsonResponse({'status':'true','message':message}, status=200)
 
         command = f'''insert into companies values('{company_name}');'''
-        con.commit()
         cursor.execute(command)
         cursor.execute(f'''create table {company_name}(DATE varchar(30), ACTUAL decimal(10, 4), PRED decimal(10, 4) );''')
         con.commit()
@@ -149,6 +208,7 @@ def select_all_from_table(request, tablename):
     zoom.append([{'type': 'string', 'label' : 'Date'}, 'Actual', 'Pred'])
     zoom = zoom + final[-2*predict_till:]
     json_response = {
+        "company_name" : tablename,
         "data" : final, 
         "zoom" : zoom, 
         "main_title" : f'PAST {get_last} DAYS + {predict_till} DAYS ',
@@ -177,6 +237,29 @@ def insert_value(company_name, tuple):
         if pred!='NULL':
             cursor.execute(f'''update {company_name} set pred={pred} where date='{date}' ;''')
 
+    con.commit()
+
+def group_insert(company_name, data):
+    company_name = company_name.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
+    cursor = con.cursor()
+    for tuple in data:
+        date, actual, pred = tuple
+        if pred is None:
+            pred = 'NULL'
+        if actual is None:
+            actual = 'NULL'
+        command = f'''select DATE from {company_name} where DATE='{date}';'''
+        cursor.execute(command);
+        data = cursor.fetchall()
+        if(len(data)==0):
+            print('New Date')
+            cursor.execute(f'''insert into {company_name} values('{date}', {actual}, {pred});''')
+        else:
+            print('Date Exists')
+            if actual!='NULL':
+                cursor.execute(f'''update {company_name} set actual={actual} where date='{date}' ;''')
+            if pred!='NULL':
+                cursor.execute(f'''update {company_name} set pred={pred} where date='{date}' ;''')
     con.commit()
 
 def is_company(tablename):
@@ -303,6 +386,76 @@ def train_for_ticker(ticker):
     return True
     # append_to_csv(no_pred+have_pred)
 
+# utility function to send email to subscribers
+def subscriber_email(ticker, image_path):
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = "pettaparaak003@gmail.com"  # Enter your address
+    cursor = con.cursor()
+    command = f'''SELECT EMAIL FROM SUBSCRIBERS WHERE ticker='{ticker}' '''
+    cursor.execute(command)
+    data = cursor.fetchall()
+    print(ticker)
+    receiver_email = ["rakshithcrm@gmail.com"]  # Enter receiver address
+    for email in data:
+        if email[0] not in receiver_email:
+            receiver_email.append(email[0])
+    print(receiver_email)
+    msg = MIMEMultipart('alternative')
+    msg['From'] = sender_email
+    msg['Subject'] = f'{ticker} :  PREDICTION FOR TODAY({datetime.today().strftime("%Y-%m-%d")})'
+
+    password = "wvbyqfnwbzxrhpqz"
+    html = """\
+    <html>
+    <head></head>
+    <body>
+        <p>Hi Subscriber!<br>
+        Thanks for subscribing to us
+        </p>
+        <br>
+        With Regards <br>
+        Rakshith C.R.M <br>
+        Stock Prediction Server :)
+        <br><br>
+        Please find our attached prediction below! Have a great day!
+    </body>
+    </html>
+    """
+    img = open(image_path, 'rb')
+    msgImage = MIMEImage(img.read())
+    img.close()
+    part = MIMEText(html, 'html')
+    msg.attach(part)
+    msgImage.add_header('Content-Disposition', "attachment; filename= %s" % ticker)
+    msg.attach(msgImage)
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+# utility function to get latest 50 and next 50 stock data and send update to subscribers
+def daily_quick_peek(tablename):
+    tablename = tablename.upper()
+    tablename = tablename.replace('.ns', '').replace('.NS', '')
+    cursor = con.cursor()
+    cursor.execute(f'''select * from {tablename} order by date;''')
+    data = cursor.fetchall()[-3*predict_till:]
+    dates = []
+    actual = []
+    pred = []
+    for row in data:
+        dates.append(row[0])
+        actual.append(row[1])
+        pred.append(row[2])
+    plt.clf()
+    plt.title(f'''{tablename.upper()} : DATE : {datetime.today().strftime('%Y-%m-%d')}''')
+    plt.plot(dates, actual, label="actual")
+    plt.plot(dates, pred, label="pred")
+    plt.legend()
+    path_to_plot = f'./images/{tablename}.png'
+    plt.savefig(path_to_plot)
+    subscriber_email(tablename, path_to_plot)
+    
 def forecast_for_ticker(ticker):
     try:
         ticker = ticker.upper()
@@ -325,12 +478,13 @@ def forecast_for_ticker(ticker):
             print(f'trying {checking} ticker...')
             stock_price = yf.Ticker(checking).history(start='2021-01-01', end=today).Close
         series = np.array(stock_price)
-
         dates = np.array([time.strftime('%Y-%m-%d') for time in stock_price.index])
         # Check Past Actual values are set
+        rewrite_last_group_data = []
         for i in range(rewrite_last):
             # print(f'{ticker}, ({dates[-2-i]}, {series[-2-i]}, None)')
-            insert_value(ticker, (dates[-2-i], series[-2-i], None))
+            rewrite_last_group_data.append((dates[-2-i], series[-2-i], None))
+        group_insert(ticker, rewrite_last_group_data)
         # data = windowed_dataset(series[-8:], window_size, batch_size, None)
 
         print('''Yesterday's Stock Value \t: ''', series[-1], ' - ', dates[-1])
@@ -354,6 +508,7 @@ def forecast_for_ticker(ticker):
         days = predict_till
         new_forecast = series.copy()
         new_pred = []
+        group_insert_data = []
         for iter in range(days):
             val = model.predict(np.expand_dims(new_forecast[-window_size:], axis=0))[0][0]
             new_forecast = np.append(new_forecast, [val], axis=0)
@@ -361,13 +516,9 @@ def forecast_for_ticker(ticker):
             if iter>0:
                 iter_date = (datetime.now().date()+timedelta(iter)).strftime('%Y-%m-%d')
                 if not is_holiday(iter_date):
-                    insert_value(ticker, (iter_date, None, val))
-        # train_data = windowed_dataset(series[-12:], window_size=window_size, batch_size=1, shuffler=2)
-        # dict_ = {'DATE' : dates[-1], ticker.upper() : series[-1], 'PRED' : np.NaN}
-        # dict_2 = {'DATE' : today, ticker.upper() : np.NaN, 'PRED' : today_pred}
-        # dict_3 = {'DATE' : next_week_date.strftime('%Y-%m-%d'), ticker.upper() : np.NaN, 'PRED' : new_pred[-1]}
-
-        # insert_value(ticker, (next_week_date, None, new_pred[-1]))
+                    group_insert_data.append((iter_date, None, val))
+        group_insert(ticker, group_insert_data)
+        daily_quick_peek(ticker)
     except:
         return False    
     return True

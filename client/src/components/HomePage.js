@@ -1,4 +1,4 @@
-import { Grid, Paper, AppBar, IconButton, Button, Toolbar, Box, Typography, FormControl, InputLabel, Select, MenuItem, Container, Menu, Tooltip } from '@mui/material';
+import { Grid, Paper, AppBar, IconButton, Button, Toolbar, Box, Typography, FormControl, InputLabel, Select, MenuItem, Container, Menu, Tooltip, TextField } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Chart } from "react-google-charts";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -11,12 +11,14 @@ import 'react-toastify/dist/ReactToastify.css';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import EmailIcon from '@mui/icons-material/Email';
-import StarIcon from '@mui/icons-material/Star';
+import TelegramIcon from '@mui/icons-material/Telegram';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 toast.configure();
 
 const HomePage = ()=>{
     let [NoOfFetches, setFetches] = useState(0);
+    var [email, setEmail] = useState('');
     const theme_color = '#2a6f97';
     const theme_color2 = '#168aad';
     const app_bar_text = 'white';
@@ -26,10 +28,10 @@ const HomePage = ()=>{
     var [StockData, setStockData] = useState([]);
     var [Zoom, setZoom] = useState([]);
     var [Ticker, setTicker] = useState(' ');
+    var [CompanyName, setCompanyName] = useState('');
     var [Companies, setCompanies] = useState([]);
     var [MainTitle, setMainTitle] = useState('');
     var [SubTitle, setSubTitle] = useState('');
-
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
@@ -55,6 +57,7 @@ const HomePage = ()=>{
             setZoom(data.zoom);
             setMainTitle(data.main_title);
             setSubTitle(data.sub_title);
+            setCompanyName(data.company_name);
             console.log(data.data);
             console.log(data.zoom);
             console.log(StockData);
@@ -91,6 +94,47 @@ const HomePage = ()=>{
         }
         setLoading(false);
     }
+    const subscribeStock = async()=>{
+        const body = {"email" : email};
+        const response = await fetch(`http://localhost:8000/api/subscribe/${Ticker}`, {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        console.log(data);
+        console.log(data.status);
+        if(data.status==="true"){
+            console.log("Success");
+            toast(`Subscribed to the Stock ${Ticker.slice(0, -3)} :D`);
+        }
+        else if(data.status==="false"){
+            toast.error(data.message);
+        }
+        else {
+            toast.warning(data.message);
+        }
+    };
+    const unsubscribeStock = async()=>{
+        const body = {"email" : email};
+        const response = await fetch(`http://localhost:8000/api/unsubscribe/${Ticker}`, {
+            method : 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        console.log(data);
+        console.log(data.status);
+        if(data.status==="true"){
+            toast(`Unsubscribed to ${Ticker.slice(0, -3)}. If possible take your time and email me on what went wrong :D`, {color : '#e5e5e5'});
+        }
+        else if(data.status==="false"){
+            toast.error(data.message);
+        }
+        else {
+            toast.warning(data.message);
+        }
+    };
     useEffect(()=>{
         getCompanies();
         getData(Ticker);
@@ -204,7 +248,6 @@ const HomePage = ()=>{
             </Toolbar>
         </Container>
         </AppBar>     
-            
         <div className="collapse" id="collapseExample">
             <Paper className='p-5 container mt-3'>
             <form>
@@ -230,6 +273,7 @@ const HomePage = ()=>{
             <Paper elevation={5}>
                 {StockData.length > 10 ? 
                 <div>
+                    <Typography variant='h3' className='App mt-3 p-3'>{CompanyName}</Typography>
                     <h1 className='mt-3 pt-3'><Typography variant="h4" gutterBottom component="div"> {MainTitle} </Typography></h1>
                     <Chart
                         width={'100%'}
@@ -334,30 +378,69 @@ const HomePage = ()=>{
             </Grid>
         </div>
         {/* <hr /> */}
-        <footer class="App pt-4" style={{backgroundColor : '#0096c7'}}>
-            <div class="container">
-                <div class="row">
-                    <div class="">
-                        <Typography variant='h4' className='mb-2'>Contact Us</Typography>
+        <footer class="App pt-4 mt-4 border" style={{backgroundColor : '#ffffff '}}>
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={6} lg={8} style={{backgroundColor : '#ffffff '}}>
+                    <div class="d-flex justify-content-between container">
+                        <Typography variant='h5' style={{color : '#343a40'}}>(UN)SUBSCRIBE TO STOCKS</Typography>
+                        <small class="form-text text-muted">We'll never share your email with anyone else.</small>
+                        <FormControl style={{color : 'white'}} variant='outlined' sx={{minWidth: 120, maxWidth : 400 }}>
+                            <Select
+                                value={Ticker}
+                                onChange={e=>{
+                                    setTicker(e.target.value);
+                                    getData(e.target.value);
+                                    handleCloseNavMenu();
+                                }}
+                                variant='outlined'
+                                size='small'
+                                displayEmpty
+                                inputProps={{ 'aria-label': 'Without label' }}
+                                >
+                                    {Companies.map(company => (
+                                        <MenuItem key={company} style={{color : theme_color}} value={company}>
+                                            <Typography style={{color : theme_color}}>{company.slice(0, -3)}</Typography>
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                        </FormControl>
                     </div>
-                    <div class="d-flex justify-content-center">
-                        <a href='https://github.com/rakshith-crm' target="_blank" rel="noreferrer">
-                            <GitHubIcon className='icon m-1' fontSize='large' sx={{color : '#212529'}} />
-                        </a>
-                        <a  href='https://www.linkedin.com/in/rakshith-crm/' target="_blank" rel="noreferrer">
-                            <LinkedInIcon  className='icon m-1' fontSize='large' sx={{color : '#212529'}} />
-                        </a>
-                        <a href='mailto:rakshithcrm@gmail.com' target="_blank" rel="noreferrer">
-                            <EmailIcon className='icon m-1' fontSize='large' sx={{color : '#212529'}} />
-                        </a>
-                    </div>
-                    <Typography variant='h5' className="mt-4 mb-3" sx={{ fontWeight: 'light', fontFamily: 'Monospace', letterSpacing: 3  }} >
-                        <StarIcon sx={{color : '#212529'}} /> 
-                            Rakshith C.R.M
-                        <StarIcon sx={{color : '#212529'}} />
+                    <form>
+                        <div className='d-flex justify-content-between mt-2 container'>
+                        <TextField size='small' label="Email" variant="filled" onChange={e => {setEmail(e.target.value)}} fullWidth required />
+                        <Button onClick={()=>subscribeStock()} variant="contained" color="success" size="small"><TelegramIcon fontSize='large'  /></Button>
+                        <Button onClick={()=>unsubscribeStock()} variant="contained" color='error' size="small"><CancelIcon fontSize='large'  /></Button>
+
+                        </div>
+                    </form>
+                    <Typography className='mt-2 container' variant="body1" gutterBottom style={{textAlign : 'justify'}}>
+                        You will be receiving daily email about the chosen stock's prediction. You could track your stock with ease. You no longer need to visit the site everyday.
+                        Make sure you choose your stock before you subscribe.
                     </Typography>
-                </div>
-            </div>
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <div class="container">
+                        <div class="row">
+                            <Typography variant='h5' className='mb-2' style={{color : '#343a40'}}>CONTACT US</Typography>
+                            <div class="d-flex justify-content-center">
+                                <a href='https://github.com/rakshith-crm' target="_blank" rel="noreferrer">
+                                    <GitHubIcon className='icon m-1' fontSize='large' sx={{color : '#343a40'}} />
+                                </a>
+                                <a  href='https://www.linkedin.com/in/rakshith-crm/' target="_blank" rel="noreferrer">
+                                    <LinkedInIcon  className='icon m-1' fontSize='large' sx={{color : '#343a40'}} />
+                                </a>
+                                <a href='mailto:rakshithcrm@gmail.com' target="_blank" rel="noreferrer">
+                                    <EmailIcon className='icon m-1' fontSize='large' sx={{color : '#343a40'}} />
+                                </a>
+                            </div>
+                            <Typography variant='h5' className="mt-5 mb-3" >
+                                    RAKSHITH C.R.M
+                            </Typography>
+                        </div>
+                    </div>                 
+                </Grid>
+            </Grid>
+            
         </footer>
 
         </div>

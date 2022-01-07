@@ -36,9 +36,9 @@ SECRET_KEY = "{{ secret_key }}"
 DEBUG = (os.getenv('PROCESS_ENV') == 'DEVELOPMENT')
 # DEBUG = True
 if (DEBUG):
-    print('Developement Mode')
+    print('DEVELOPMENT MODE')
 else:
-    print('Production Mode')
+    print('PRODUCTION MODE')
 ALLOWED_HOSTS = ['*']
 
 
