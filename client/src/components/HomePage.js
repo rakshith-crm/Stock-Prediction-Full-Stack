@@ -96,7 +96,7 @@ const HomePage = ()=>{
     }
     const subscribeStock = async()=>{
         const body = {"email" : email};
-        const response = await fetch(`http://localhost:8000/api/subscribe/${Ticker}`, {
+        const response = await fetch(`api/subscribe/${Ticker}`, {
             method : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -117,7 +117,7 @@ const HomePage = ()=>{
     };
     const unsubscribeStock = async()=>{
         const body = {"email" : email};
-        const response = await fetch(`http://localhost:8000/api/unsubscribe/${Ticker}`, {
+        const response = await fetch(`api/unsubscribe/${Ticker}`, {
             method : 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
