@@ -151,8 +151,8 @@ def insert_into_companies(request, company_name):
                 return JsonResponse({'status':'false','message':message}, status=500)
         if DEBUG==False:
             request_static_stock_mail(ticker)
-            message = 'Admin Intimated. Please Check Back In One Day'
-            # return JsonResponse({'status':'true','message':message}, status=200)
+            message = 'Admin Intimated. Please Check Back In One Hour'
+            return JsonResponse({'status':'true','message':message}, status=200)
 
         command = f'''insert into companies values('{company_name}');'''
         cursor.execute(command)
@@ -161,7 +161,7 @@ def insert_into_companies(request, company_name):
         trained = train_for_ticker(ticker)
         forecasted=False
         if trained:
-            forecasted = forecast_for_ticker(ticker)
+            forecasted = forecast_for_ticker(ticker, force=1)
         if (trained==True and forecasted==True):
             message = 'Request, Succesfully processed. Reload Page'
             return JsonResponse({'status':'true','message':message}, status=200)
@@ -446,6 +446,7 @@ def daily_quick_peek(tablename):
         dates.append(row[0])
         actual.append(row[1])
         pred.append(row[2])
+    plt.plot([1],[1])
     plt.clf()
     plt.title(f'''{tablename.upper()} : DATE : {datetime.today().strftime('%Y-%m-%d')}''')
     plt.plot(dates, actual, label="actual")
@@ -455,7 +456,7 @@ def daily_quick_peek(tablename):
     plt.savefig(path_to_plot)
     subscriber_email(tablename, path_to_plot)
     
-def forecast_for_ticker(ticker):
+def forecast_for_ticker(ticker, force=0):
     try:
         ticker = ticker.upper()
         checking = ticker.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
@@ -471,7 +472,7 @@ def forecast_for_ticker(ticker):
             return False
         else:
             print(f'|%-14s |  False  |'%checking)
-            if is_holiday(today):
+            if is_holiday(today) and force==0:
                 return False
         model = tf.keras.models.load_model('./models/'+checking+'_model.h5')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
@@ -519,7 +520,8 @@ def forecast_for_ticker(ticker):
                 if not is_holiday(iter_date):
                     group_insert_data.append((iter_date, None, val))
         group_insert(ticker, group_insert_data)
-        daily_quick_peek(ticker)
+        if force==0:
+            daily_quick_peek(ticker)
     except:
         return False    
     return True
