@@ -519,7 +519,9 @@ def forecast_for_ticker(ticker, force=0):
                 iter_date = (datetime.now().date()+timedelta(iter)).strftime('%Y-%m-%d')
                 if not is_holiday(iter_date):
                     group_insert_data.append((iter_date, None, val))
+        print('Group Inserting Data')
         group_insert(ticker, group_insert_data)
+        print('Group Data Inserted')
         if force==0:
             daily_quick_peek(ticker)
     except:
@@ -591,7 +593,7 @@ if(len(data)==0 and len(models_available)>0):
         trained = train_for_ticker(ticker)
         forecasted=False
         if trained:
-            forecasted = forecast_for_ticker(ticker)
+            forecasted = forecast_for_ticker(ticker, force=1)
         if (trained==True and forecasted==True):
             print(f'SERVER FROM START: INITIAL {ticker} LOADED')
         else:
@@ -617,18 +619,18 @@ elif(len(data)==0 and len(models_available)==0):
     else:
         message = 'Fatal Server Error!'
         exit(-1)
+else:
+    command = command = 'SELECT * FROM companies;'
+    cursor.execute(command)
+    data = cursor.fetchall()
 
-command = command = 'SELECT * FROM companies;'
-cursor.execute(command)
-data = cursor.fetchall()
+    for i in data:
+        companies.append(i[0].upper()+'.NS')
 
-for i in data:
-    companies.append(i[0].upper()+'.NS')
-
-print(f'''.{'-'*25}.''')
-print('|Companies\t| STATUS  |')
-print(f'''|{'-'*25}|''')
-for company in companies:
-    forecast_for_ticker(company)
-print(f''':{'-'*25}:''')
+    print(f'''.{'-'*25}.''')
+    print('|Companies\t| STATUS  |')
+    print(f'''|{'-'*25}|''')
+    for company in companies:
+        forecast_for_ticker(company)
+    print(f''':{'-'*25}:''')
 
