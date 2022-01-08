@@ -385,7 +385,6 @@ def train_for_ticker(ticker):
 
     return True
     # append_to_csv(no_pred+have_pred)
-
 # utility function to send email to subscribers
 def subscriber_email(ticker, image_path):
     port = 465  # For SSL
@@ -460,6 +459,7 @@ def forecast_for_ticker(ticker):
     try:
         ticker = ticker.upper()
         checking = ticker.replace('.ns', '').replace('.NS', '').replace('.Ns', '').replace('.nS', '')
+        today = datetime.now().date().strftime('%Y-%m-%d')
         next_week_date = (datetime.now().date()+timedelta(predict_till-1)).strftime('%Y-%m-%d')
         cursor = con.cursor()
         command = f'''select * from {checking} where date='{next_week_date}' ;'''
@@ -471,8 +471,9 @@ def forecast_for_ticker(ticker):
             return False
         else:
             print(f'|%-14s |  False  |'%checking)
+            if is_holiday(today):
+                return False
         model = tf.keras.models.load_model('./models/'+checking+'_model.h5')
-        today = datetime.now().date().strftime('%Y-%m-%d')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
         if len(stock_price)==0:
             print(f'trying {checking} ticker...')
