@@ -644,7 +644,10 @@ if(len(data)==0 and len(models_available)>0):
     print('Pretrained models exists...\n---------------------------')
     for ticker in models_available:
         ticker = ticker.replace('_model.h5', '')
-        fullname = yf.Ticker(ticker).info['longName']
+        try:
+            fullname = yf.Ticker(ticker).info['longName']
+        except:
+            fullname = yf.Ticker(ticker).info['shortName']
         company_name = convert_ticker_name(ticker)
         command = f'''insert into companies values('{ticker}', '{fullname}');'''
         con.commit()
@@ -665,7 +668,10 @@ elif(len(data)==0 and len(models_available)==0):
     request = HttpRequest()
     request.method = 'GET'
     ticker = 'TATASTEEL.NS'
-    fullname = yf.Ticker(ticker).info['longName']
+    try:
+        fullname = yf.Ticker(ticker).info['longName']
+    except:
+        fullname = yf.Ticker(ticker).info['shortName']
     company_name = convert_ticker_name(ticker)
     command = f'''insert into companies values('{ticker}', '{fullname}');'''
     con.commit()
