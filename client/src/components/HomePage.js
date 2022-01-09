@@ -1,4 +1,4 @@
-import { Grid, Paper, AppBar, IconButton, Button, Toolbar, Box, Typography, FormControl, InputLabel, Select, MenuItem, Container, Menu, Tooltip, TextField } from '@mui/material';
+import { Grid, Paper, AppBar, IconButton, Button, Toolbar, Box, Typography, FormControl, InputLabel, Select, MenuItem, Container, Menu, Tooltip, TextField, OutlinedInput, ListItemText, Checkbox} from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Chart } from "react-google-charts";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -14,18 +14,32 @@ import EmailIcon from '@mui/icons-material/Email';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import CancelIcon from '@mui/icons-material/Cancel';
 
+
 toast.configure();
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 const HomePage = ()=>{
+    const [subcribeListTest, setSubscribeListTest] = useState([]);
     let [NoOfFetches, setFetches] = useState(0);
     var [email, setEmail] = useState('');
-    var [subscriberTicker, setSubscriberTicker] = useState('All');
+    var [checkedAllSub, setcheckedAllSub] = useState(false);
     const theme_color = '#2a6f97';
     const theme_color2 = '#168aad';
     const app_bar_text = 'white';
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [formTicker, setFormTicker] = useState('');
     const [loading, setLoading] = useState(false);
+    const [subLoading1, setSubLoading1] = useState(false);
+    const [subLoading2, setSubLoading2] = useState(false);
     var [StockData, setStockData] = useState([]);
     var [Zoom, setZoom] = useState([]);
     var [Ticker, setTicker] = useState(' ');
@@ -36,10 +50,28 @@ const HomePage = ()=>{
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
-      };
-      const handleCloseNavMenu = () => {
+    };
+    const handleCloseNavMenu = () => {
         setAnchorElNav(null);
+    };
+    const handleSubscribeMore = (event) => {
+        const {
+          target: { value },
+        } = event;
+        setSubscribeListTest(
+          // On autofill we get a stringified value.
+          typeof value === 'string' ? value.split(',') : value,
+        );
       };
+    const handleCheckAll = (e) => {
+        if(checkedAllSub===false) {
+            setSubscribeListTest(Companies);
+            setcheckedAllSub(true);
+        } else {
+            setSubscribeListTest([]);
+            setcheckedAllSub(false);
+        }
+    };
     const getData = async(ticker)=>{
         try {
             if(NoOfFetches===0){
@@ -96,8 +128,8 @@ const HomePage = ()=>{
         setLoading(false);
     }
     const subscribeStock = async()=>{
-        const body = {"email" : email};
-        const response = await fetch(`api/subscribe/${subscriberTicker}`, {
+        const body = {"email" : email, "stocks" : subcribeListTest};
+        const response = await fetch(`api/subscribe`, {
             method : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -115,10 +147,11 @@ const HomePage = ()=>{
         else {
             toast.warning(data.message);
         }
+        setSubLoading1(false);
     };
     const unsubscribeStock = async()=>{
-        const body = {"email" : email};
-        const response = await fetch(`api/unsubscribe/${subscriberTicker}`, {
+        const body = {"email" : email, "stocks" : subcribeListTest};
+        const response = await fetch(`api/unsubscribe`, {
             method : 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -127,7 +160,7 @@ const HomePage = ()=>{
         console.log(data);
         console.log(data.status);
         if(data.status==="true"){
-            toast(`Unsubscribed to ${subscriberTicker.slice(0, -3)}. If possible take your time and email me on what went wrong :D`, {color : '#e5e5e5'});
+            toast(data.message);
         }
         else if(data.status==="false"){
             toast.error(data.message);
@@ -135,6 +168,7 @@ const HomePage = ()=>{
         else {
             toast.warning(data.message);
         }
+        setSubLoading2(false);
     };
     useEffect(()=>{
         getCompanies();
@@ -200,7 +234,7 @@ const HomePage = ()=>{
                             >
                             {Companies.map(company => (
                                 <MenuItem key={company} style={{color : theme_color}} value={company}>
-                                    <Typography style={{color : theme_color}}>{company.slice(0, -3)}</Typography>
+                                    <Typography style={{color : theme_color}}>{company}</Typography>
                                 </MenuItem>
                             ))}
                             </Select>
@@ -231,7 +265,7 @@ const HomePage = ()=>{
                     >
                     {Companies.map(company => (
                         <MenuItem key={company} style={{backgroundColor : theme_color2}} value={company}>
-                            <Typography style={{color : app_bar_text, fontSize : '20px'}}>{company.slice(0, -3)}</Typography>
+                            <Typography style={{color : app_bar_text, fontSize : '20px'}}>{company}</Typography>
                         </MenuItem>
                     ))}
                     </Select>
@@ -384,38 +418,68 @@ const HomePage = ()=>{
                 <Grid item xs={12} md={6} lg={8} style={{backgroundColor : '#ffffff '}}>
                     <div class="d-flex justify-content-between container">
                         <Typography variant='h5' style={{color : '#343a40'}}>(UN)SUBSCRIBE TO STOCKS</Typography>
-                        <small class="form-text text-muted">We'll never share your email with anyone else.</small>
-                        <FormControl style={{color : 'white'}} variant='outlined' sx={{minWidth: 120, maxWidth : 400 }}>
+                        <FormControl sx={{minWidth: 300, maxWidth : 500 }}>
+                            <InputLabel id="demo-multiple-checkbox-label" style={{backgroundColor : 'white'}}> <b className='p-2'>Choose Stocks</b></InputLabel>
                             <Select
-                                value={subscriberTicker}
-                                defaultValue={'All'}
-                                onChange={e=>{
-                                    setSubscriberTicker(e.target.value);
-                                }}
-                                variant='outlined'
-                                size='small'
-                                displayEmpty
-                                inputProps={{ 'aria-label': 'Without label' }}
-                                >
-                                    <MenuItem style={{color : theme_color}} value={'All'}>
-                                            <Typography style={{color : theme_color}}>ALL</Typography>
+                            labelId="demo-multiple-checkbox-label"
+                            id="demo-multiple-checkbox"
+                            multiple
+                            value={subcribeListTest}
+                            onChange={handleSubscribeMore}
+                            input={<OutlinedInput label="Choose Stocks" />}
+                            renderValue={(selected) => selected.join(', ')}
+                            MenuProps={MenuProps}
+                            variant='outlined'
+                            >
+                                    <MenuItem style={{color : theme_color}}>
+                                            <Checkbox checked={checkedAllSub} onChange={handleCheckAll} />
+                                            <ListItemText primary={'All'} style={{color : theme_color}} />
                                     </MenuItem>
                                     {Companies.map(company => (
                                         <MenuItem key={company} style={{color : theme_color}} value={company}>
-                                            <Typography style={{color : theme_color}}>{company.slice(0, -3)}</Typography>
+                                            <Checkbox checked={subcribeListTest.indexOf(company) > -1} />
+                                            <ListItemText primary={company} style={{color : theme_color}} />
                                         </MenuItem>
                                     ))}
-                                </Select>
+                            </Select>
                         </FormControl>
                     </div>
                     <form>
                         <div className='d-flex justify-content-between mt-2 container'>
                         <TextField size='small' label="Email" variant="filled" onChange={e => {setEmail(e.target.value)}} fullWidth required />
-                        <Button onClick={()=>subscribeStock()} variant="contained" color="success" size="small"><TelegramIcon fontSize='large'  /></Button>
-                        <Button onClick={()=>unsubscribeStock()} variant="contained" color='error' size="small"><CancelIcon fontSize='large'  /></Button>
+                        {/* Button to Subscribe */}
+                        <LoadingButton
+                            onClick={()=>{
+                                setSubLoading1(true);
+                                subscribeStock();
+                            }}
+                            loading={subLoading1}
+                            color="success"
+                            size="small"
+                            loadingPosition="end"
+                            variant="contained">
+                                <TelegramIcon fontSize='large' />
+                        </LoadingButton>
+                        {/* Button to Unsubscribe */}
+                        <LoadingButton
+                            onClick={()=>{
+                                setSubLoading2(true);
+                                unsubscribeStock();
+                            }}
+                            loading={subLoading2}
+                            color="error"
+                            size="small"
+                            loadingPosition="end"
+                            variant="contained">
+                                <CancelIcon fontSize='large' />
+                        </LoadingButton>
+                        {/* <Button onClick={()=>subscribeStock()} variant="contained" color="success" size="small"><TelegramIcon fontSize='large'  /></Button> */}
+                        {/* <Button onClick={()=>unsubscribeStock()} variant="contained" color='error' size="small"><CancelIcon fontSize='large'  /></Button> */}
 
                         </div>
                     </form>
+                    <small class="form-text text-muted">We'll never share your email with anyone else.</small>
+
                     <Typography className='mt-2 container' variant="body1" gutterBottom style={{textAlign : 'justify'}}>
                         You will be receiving daily email about the chosen stock's prediction. You could track your stock with ease. You no longer need to visit the site everyday.
                         Make sure you choose your stock before you subscribe.
