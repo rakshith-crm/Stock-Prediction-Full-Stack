@@ -19,6 +19,7 @@ toast.configure();
 const HomePage = ()=>{
     let [NoOfFetches, setFetches] = useState(0);
     var [email, setEmail] = useState('');
+    var [subscriberTicker, setSubscriberTicker] = useState('All');
     const theme_color = '#2a6f97';
     const theme_color2 = '#168aad';
     const app_bar_text = 'white';
@@ -96,7 +97,7 @@ const HomePage = ()=>{
     }
     const subscribeStock = async()=>{
         const body = {"email" : email};
-        const response = await fetch(`api/subscribe/${Ticker}`, {
+        const response = await fetch(`api/subscribe/${subscriberTicker}`, {
             method : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -106,7 +107,7 @@ const HomePage = ()=>{
         console.log(data.status);
         if(data.status==="true"){
             console.log("Success");
-            toast(`Subscribed to the Stock ${Ticker.slice(0, -3)} :D`);
+            toast(data.message);
         }
         else if(data.status==="false"){
             toast.error(data.message);
@@ -117,7 +118,7 @@ const HomePage = ()=>{
     };
     const unsubscribeStock = async()=>{
         const body = {"email" : email};
-        const response = await fetch(`api/unsubscribe/${Ticker}`, {
+        const response = await fetch(`api/unsubscribe/${subscriberTicker}`, {
             method : 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -126,7 +127,7 @@ const HomePage = ()=>{
         console.log(data);
         console.log(data.status);
         if(data.status==="true"){
-            toast(`Unsubscribed to ${Ticker.slice(0, -3)}. If possible take your time and email me on what went wrong :D`, {color : '#e5e5e5'});
+            toast(`Unsubscribed to ${subscriberTicker.slice(0, -3)}. If possible take your time and email me on what went wrong :D`, {color : '#e5e5e5'});
         }
         else if(data.status==="false"){
             toast.error(data.message);
@@ -386,17 +387,19 @@ const HomePage = ()=>{
                         <small class="form-text text-muted">We'll never share your email with anyone else.</small>
                         <FormControl style={{color : 'white'}} variant='outlined' sx={{minWidth: 120, maxWidth : 400 }}>
                             <Select
-                                value={Ticker}
+                                value={subscriberTicker}
+                                defaultValue={'All'}
                                 onChange={e=>{
-                                    setTicker(e.target.value);
-                                    getData(e.target.value);
-                                    handleCloseNavMenu();
+                                    setSubscriberTicker(e.target.value);
                                 }}
                                 variant='outlined'
                                 size='small'
                                 displayEmpty
                                 inputProps={{ 'aria-label': 'Without label' }}
                                 >
+                                    <MenuItem style={{color : theme_color}} value={'All'}>
+                                            <Typography style={{color : theme_color}}>ALL</Typography>
+                                    </MenuItem>
                                     {Companies.map(company => (
                                         <MenuItem key={company} style={{color : theme_color}} value={company}>
                                             <Typography style={{color : theme_color}}>{company.slice(0, -3)}</Typography>

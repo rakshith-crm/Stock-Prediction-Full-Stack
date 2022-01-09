@@ -84,28 +84,83 @@ def check_valid_email(email):
         return True
     return False
 
+def subscription_confirmation_mail(ticker, email_id, count_of_stocks):
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = "pettaparaak003@gmail.com"  # Enter your address
+    receiver_email = email_id  # Enter receiver address
+    msg = MIMEMultipart('alternative')
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    if(count_of_stocks=='SINGLE'):
+        msg['Subject'] = f'Subscription Confirmation - {ticker}'
+    else:
+        msg['Subject'] = f'Subscription Confirmation - All Stocks'
+    password = "wvbyqfnwbzxrhpqz"
+    html = """\
+    <html>
+    <head></head>
+    <body>
+        <p>Hi Subscriber!<br>
+        You have successfully subscribed to the stock. 
+        You will be receiving daily email about the chosen stock's prediction. 
+        You could track your stock with ease. 
+        You no longer need to visit the site everyday. 
+        :D
+        </p>
+        <br>
+        With Regards <br>
+        Stock Prediction Server :)
+    </body>
+    </html>
+    """
+    part = MIMEText(html, 'html')
+    msg.attach(part)
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+
 @api_view(['POST'])
 def subscribe(request, company_name):
     company_name = company_name.upper().replace('.NS', '')
     print(company_name)
+    companies = []
+    if(company_name=='ALL'):
+        cursor = con.cursor()
+        command = 'SELECT * FROM companies;'
+        cursor.execute(command)
+        data = cursor.fetchall()
+        for i in data:
+            companies.append(i[0].upper())
+    else:
+        companies.append(company_name)
+    print(companies)
     body = json.loads(request.body)
     if not check_valid_email(body['email']):
         message = "Invalid Email! Please Enter a valid email."
         response = JsonResponse({'status':'invalid','message':message}, status=400) 
         return response
     cursor = con.cursor()
-    command = f'''SELECT * FROM SUBSCRIBERS WHERE ticker='{company_name}' and email='{body['email']}' '''
-    cursor.execute(command)
-    data = cursor.fetchall()
-    if(len(data)==0):
-        command = f'''INSERT INTO SUBSCRIBERS VALUES('{body['email']}', '{company_name.upper()}')'''
+    message = ''
+    for company in companies:
+        command = f'''SELECT * FROM SUBSCRIBERS WHERE ticker='{company}' and email='{body['email']}' '''
         cursor.execute(command)
-        con.commit()
-        message = {"message" : "Subscribed to {company_name}. Thank You :D"}
+        data = cursor.fetchall()
+        if(len(data)==0):
+            command = f'''INSERT INTO SUBSCRIBERS VALUES('{body['email']}', '{company.upper()}')'''
+            cursor.execute(command)
+            message = {"message" : "Subscribed to {company}. Thank You :D"}
+        else:
+            message = f"You are already Subscribed to the Company {company}."
+    con.commit()
+    if(company_name=='ALL'):
+        message = 'Subscribed to All Stocks :D'
+        subscription_confirmation_mail(company, body['email'], 'ALL')
         response = JsonResponse({'status':'true','message':message}, status=200)
     else:
-        message = f"You are already Subscribed to the Company {company_name}."
-        response = JsonResponse({'status':'false','message':message}, status=500)   
+        subscription_confirmation_mail(company, body['email'], 'SINGLE')
+        response = JsonResponse({'status':'true','message':message}, status=200)
     return response
 
 @api_view(['DELETE'])
