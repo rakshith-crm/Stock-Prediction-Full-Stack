@@ -413,12 +413,13 @@ const HomePage = ()=>{
             </Grid>
         </div>
         {/* <hr /> */}
-        <footer class="App pt-4 mt-4 border" style={{backgroundColor : '#ffffff '}}>
+        <footer class="App pt-4 mt-4 border" style={{backgroundColor : '#ffffff ', height : 'auto'}}>
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6} lg={8} style={{backgroundColor : '#ffffff '}}>
                     <div class="d-flex justify-content-between container">
-                        <Typography variant='h5' style={{color : '#343a40'}}>(UN)SUBSCRIBE TO STOCKS</Typography>
-                        <FormControl sx={{minWidth: 300, maxWidth : 500 }}>
+                    <Typography variant='h5' style={{color : '#343a40'}}>(UN)SUBSCRIBE TO STOCKS</Typography>
+
+                        <FormControl sx={{minWidth: 150, maxWidth : 150 }}>
                             <InputLabel id="demo-multiple-checkbox-label" style={{backgroundColor : 'white'}}> <b className='p-2'>Choose Stocks</b></InputLabel>
                             <Select
                             labelId="demo-multiple-checkbox-label"
