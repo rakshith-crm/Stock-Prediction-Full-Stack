@@ -11,7 +11,7 @@ import json
 import re  
 import psycopg2
 import urllib.parse as urlparse
-
+import io
 from yfinance.ticker import Ticker
 from server.settings import DATABASE_URL, DEBUG
 import os
@@ -19,6 +19,8 @@ import smtplib, ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from email.mime.base import MIMEBase
+from email.encoders import encode_base64
 import matplotlib.pyplot as plt
 import hashlib
 
@@ -485,7 +487,6 @@ def subscriber_email(ticker, image_path):
     msg = MIMEMultipart('alternative')
     msg['From'] = sender_email
     msg['Subject'] = f'{ticker} :  PREDICTION FOR TODAY({datetime.today().strftime("%Y-%m-%d")})'
-
     password = "wvbyqfnwbzxrhpqz"
     html = """\
     <html>
@@ -527,16 +528,62 @@ def daily_quick_peek(ticker):
         dates.append(row[0])
         actual.append(row[1])
         pred.append(row[2])
+    fig = plt.figure()
     plt.plot([1],[1])
     plt.clf()
     plt.title(f'''{tablename.upper()} : DATE : {datetime.today().strftime('%Y-%m-%d')}''')
     plt.plot(dates, actual, label="actual")
     plt.plot(dates, pred, label="pred")
     plt.legend()
-    path_to_plot = f'./images/{tablename}.png'
-    plt.savefig(path_to_plot)
-    subscriber_email(tablename, path_to_plot)
-    
+    buf = io.BytesIO()
+    plt.savefig(buf, format = 'png')
+    buf.seek(0)
+    ## Mailing the plot to the users
+    port = 465  # For SSL
+    smtp_server = "smtp.gmail.com"
+    sender_email = "pettaparaak003@gmail.com"  # Enter your address
+    cursor = con.cursor()
+    command = f'''SELECT EMAIL FROM SUBSCRIBERS WHERE ticker='{ticker}' '''
+    cursor.execute(command)
+    data = cursor.fetchall()
+    print(ticker)
+    receiver_email = ["rakshithcrm@gmail.com"]  # Enter receiver address
+    for email in data:
+        if email[0] not in receiver_email:
+            receiver_email.append(email[0])
+    print(receiver_email)
+    msg = MIMEMultipart('alternative')
+    msg['From'] = sender_email
+    msg['Subject'] = f'{ticker} :  PREDICTION FOR TODAY({datetime.today().strftime("%Y-%m-%d")})'
+    password = "wvbyqfnwbzxrhpqz"
+    html = """\
+    <html>
+    <head></head>
+    <body>
+        <p>Hi Subscriber!<br>
+        Thanks for subscribing to us
+        </p>
+        <br>
+        With Regards <br>
+        Rakshith C.R.M <br>
+        Stock Prediction Server :)
+        <br><br>
+        Please find our attached prediction below! Have a great day!
+    </body>
+    </html>
+    """
+    html_part = MIMEText(html, 'html')
+    msg.attach(html_part)
+    image_part = MIMEBase('application', "octet-stream")
+    image_part.set_payload(buf.read())
+    encode_base64(image_part)
+    image_part.add_header('Content-Disposition', 'attachment; filename="%s"' % f'{ticker.upper()}.png')
+    msg.attach(image_part)
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+
 def forecast_for_ticker(ticker, force=0):
     try:
         ticker = ticker.upper()
