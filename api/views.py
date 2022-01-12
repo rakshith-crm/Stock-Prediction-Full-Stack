@@ -13,7 +13,7 @@ import psycopg2
 import urllib.parse as urlparse
 import io
 from yfinance.ticker import Ticker
-from server.settings import DATABASE_URL, DEBUG
+from server.settings import DATABASE_URL, DEBUG, EMAIL_ADDR, PASSWORD
 import os
 import smtplib, ssl
 from email.mime.multipart import MIMEMultipart
@@ -70,13 +70,13 @@ def convert_ticker_name(ticker):
 def request_static_stock_mail(ticker):
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
-    sender_email = "pettaparaak003@gmail.com"  # Enter your address
+    sender_email = EMAIL_ADDR # Enter your address
     receiver_email = "rakshithcrm@gmail.com"  # Enter receiver address
     msg = MIMEMultipart('alternative')
     msg['From'] = sender_email
     msg['To'] = receiver_email
     msg['Subject'] = f'Stock Request - {ticker}'
-    password = "wvbyqfnwbzxrhpqz"
+    password = PASSWORD
     html = """\
     <html>
     <head></head>
@@ -106,7 +106,7 @@ def check_valid_email(email):
 def subscription_confirmation_mail(companies, email_id, count_of_stocks):
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
-    sender_email = "pettaparaak003@gmail.com"  # Enter your address
+    sender_email = EMAIL_ADDR
     receiver_email = email_id  # Enter receiver address
     msg = MIMEMultipart('alternative')
     msg['From'] = sender_email
@@ -115,7 +115,7 @@ def subscription_confirmation_mail(companies, email_id, count_of_stocks):
         msg['Subject'] = f'Subscription Confirmation - {companies}'
     else:
         msg['Subject'] = f'Subscription Confirmation - All Stocks'
-    password = "wvbyqfnwbzxrhpqz"
+    password = PASSWORD
     html = """\
     <html>
     <head></head>
@@ -541,7 +541,7 @@ def daily_quick_peek(ticker):
     ## Mailing the plot to the users
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
-    sender_email = "pettaparaak003@gmail.com"  # Enter your address
+    sender_email = EMAIL_ADDR
     cursor = con.cursor()
     command = f'''SELECT EMAIL FROM SUBSCRIBERS WHERE ticker='{ticker}' '''
     cursor.execute(command)
@@ -555,7 +555,7 @@ def daily_quick_peek(ticker):
     msg = MIMEMultipart('alternative')
     msg['From'] = sender_email
     msg['Subject'] = f'{ticker} :  PREDICTION FOR TODAY({datetime.today().strftime("%Y-%m-%d")})'
-    password = "wvbyqfnwbzxrhpqz"
+    password = PASSWORD
     html = """\
     <html>
     <head></head>
