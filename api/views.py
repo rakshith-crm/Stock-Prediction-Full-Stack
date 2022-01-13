@@ -12,7 +12,6 @@ import re
 import psycopg2
 import urllib.parse as urlparse
 import io
-from yfinance.ticker import Ticker
 from server.settings import DATABASE_URL, DEBUG, EMAIL_ADDR, PASSWORD
 import os
 import smtplib, ssl
@@ -144,27 +143,29 @@ def subscription_confirmation_mail(companies, email_id, count_of_stocks):
 def subscribe(request):
     body = json.loads(request.body)
     companies = body['stocks']
+    email = body['email'].lower()
     if(len(companies)==0):
         message = "No Stocks Selected. Please select atleast one stock to subscribe too! :D"
         response = JsonResponse({'status':'invalid','message':message}, status=400) 
         return response
-    print(f'''{body['email']}, Subscribing to {companies}''')
-    if not check_valid_email(body['email']):
+
+    print(f'''{email}, Subscribing to {companies}''')
+    if not check_valid_email(email):
         message = "Invalid Email! Please Enter a valid email."
         response = JsonResponse({'status':'invalid','message':message}, status=400) 
         return response
     cursor = con.cursor()
     message = ''
     for company in companies:
-        command = f'''SELECT * FROM SUBSCRIBERS WHERE ticker='{company}' and email='{body['email']}' '''
+        command = f'''SELECT * FROM SUBSCRIBERS WHERE ticker='{company}' and email='{email}' '''
         cursor.execute(command)
         data = cursor.fetchall()
         if(len(data)==0):
-            command = f'''INSERT INTO SUBSCRIBERS VALUES('{body['email']}', '{company.upper()}')'''
+            command = f'''INSERT INTO SUBSCRIBERS VALUES('{email}', '{company.upper()}')'''
             cursor.execute(command)
     con.commit()
     message = f'Subscribed to {companies} :D'
-    subscription_confirmation_mail(companies, body['email'], 'SINGLE')
+    subscription_confirmation_mail(companies, email, 'SINGLE')
     response = JsonResponse({'status':'true','message':message}, status=200)
     return response
 
@@ -172,18 +173,19 @@ def subscribe(request):
 def unsubscribe(request):
     body = json.loads(request.body)
     companies = body['stocks']
+    email = body['email'].lower()
     if(len(companies)==0):
         message = "No Stocks Selected. Please select atleast one stock to unsubscribe too! :D"
         response = JsonResponse({'status':'invalid','message':message}, status=400) 
         return response
-    print(f'''{body['email']}, Unsubscribing to {companies}''')
-    if not check_valid_email(body['email']):
+    print(f'''{email}, Unsubscribing to {companies}''')
+    if not check_valid_email(email):
         message = "Invalid Email! Please Enter a valid email."
         response = JsonResponse({'status':'invalid','message':message}, status=400) 
         return response
     cursor = con.cursor()
     for company in companies:
-        command = f'''DELETE FROM SUBSCRIBERS WHERE ticker='{company}' and email='{body['email']}' '''
+        command = f'''DELETE FROM SUBSCRIBERS WHERE ticker='{company}' and email='{email}' '''
         cursor.execute(command)
     con.commit()
     message = f'Unsubscribed to {companies} :('
