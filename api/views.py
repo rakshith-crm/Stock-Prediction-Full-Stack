@@ -522,7 +522,7 @@ def daily_quick_peek(ticker):
     tablename = convert_ticker_name(ticker)
     cursor = con.cursor()
     cursor.execute(f'''select * from {tablename} order by date;''')
-    data = cursor.fetchall()[-3*predict_till:]
+    data = cursor.fetchall()[-8*predict_till:]
     dates = []
     actual = []
     pred = []
@@ -736,6 +736,36 @@ elif(len(data)==0 and len(models_available)==0):
     else:
         message = 'Fatal Server Error!'
         exit(-1)
+elif(len(data)<=len(models_available)):
+    print('New models detected...')
+    new_models = []
+    all_ticker = []
+    for company in data:
+        all_ticker.append(company[0])
+    for ticker in models_available:
+        ticker = ticker.replace('_model.h5', '')
+        if ticker not in all_ticker:
+            new_models.append(ticker)
+    for ticker in new_models:
+        try:
+            fullname = yf.Ticker(ticker).info['longName']
+        except:
+            fullname = yf.Ticker(ticker).info['shortName']
+        company_name = convert_ticker_name(ticker)
+        command = f'''insert into companies values('{ticker}', '{fullname}');'''
+        con.commit()
+        cursor.execute(command)
+        cursor.execute(f'''create table {company_name}(DATE varchar(30), ACTUAL decimal(10, 4), PRED decimal(10, 4) );''')
+        con.commit()
+        trained = train_for_ticker(ticker)
+        forecasted=False
+        if trained:
+            forecasted = forecast_for_ticker(ticker, force=1)
+        if (trained==True and forecasted==True):
+            print(f'SERVER FROM START: INITIAL {ticker} LOADED')
+        else:
+            message = 'Fatal Server Error!'
+            exit(-1)  
 else:
     command = command = 'SELECT * FROM companies;'
     cursor.execute(command)
