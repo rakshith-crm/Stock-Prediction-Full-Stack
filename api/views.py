@@ -736,7 +736,7 @@ elif(len(data)==0 and len(models_available)==0):
     else:
         message = 'Fatal Server Error!'
         exit(-1)
-elif(len(data)<=len(models_available)):
+elif(len(data)<len(models_available)):
     print('New models detected...')
     new_models = []
     all_ticker = []
