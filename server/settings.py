@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-print('WORKER STARTED WITH PID : ', os.getpid())
+
 SECRET_KEY = "{{ secret_key }}"
 
 # SECRET_KEY = 'django-insecure-5su9biymb5fa-7)-e@o60j8mj_(m%h5g04@1*9o=2yyolgueq%'
@@ -34,12 +34,8 @@ SECRET_KEY = "{{ secret_key }}"
 DEBUG = (env('PROCESS_ENV') == 'DEVELOPMENT')
 EMAIL_ADDR = env('EMAIL_ADDRESS')
 PASSWORD = env('EMAIL_PASS_CODE')
-print('EMAIL : ', EMAIL_ADDR)
-# DEBUG = True
-if (DEBUG):
-    print('DEVELOPMENT MODE')
-else:
-    print('PRODUCTION MODE')
+
+
 ALLOWED_HOSTS = ['*']
 
 
