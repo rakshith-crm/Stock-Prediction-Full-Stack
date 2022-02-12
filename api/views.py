@@ -1,7 +1,6 @@
 import hashlib
 import io
 import json
-import os
 import re
 import smtplib
 import ssl
@@ -14,11 +13,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import psycopg2
 import tensorflow as tf
 import yfinance as yf
-from django.http import JsonResponse, HttpRequest
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
 
 from server.settings import DATABASE_URL, DEBUG, EMAIL_ADDR, PASSWORD
@@ -48,7 +46,6 @@ else:
         port=port
     )
 
-
 predict_till = 50
 get_last = 400  # days
 rewrite_last = 10
@@ -68,11 +65,12 @@ def convert_ticker_name(ticker):
     return edited
 
 
+# Send email to admin regarding the latest stock ticker request
 def request_static_stock_mail(ticker):
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
-    sender_email = EMAIL_ADDR  # Enter your address
-    receiver_email = "rakshithcrm@gmail.com"  # Enter receiver address
+    sender_email = EMAIL_ADDR
+    receiver_email = "rakshithcrm@gmail.com"
     msg = MIMEMultipart('alternative')
     msg['From'] = sender_email
     msg['To'] = receiver_email
@@ -236,7 +234,7 @@ def insert_into_companies(request, ticker):
         forecasted = False
         if trained:
             forecasted = forecast_for_ticker(ticker, force=1)
-        if trained == True and forecasted == True:
+        if trained is True and forecasted is True:
             message = 'Request, Successfully processed. Reload Page'
             return JsonResponse({'status': 'true', 'message': message}, status=200)
         else:
@@ -251,7 +249,7 @@ def insert_into_companies(request, ticker):
 @api_view(['GET'])
 def select_all_from_table(request, ticker):
     if ticker == ' ':
-        print('Tablename is Empty(Space), Sending Default table')
+        print('Table name is Empty(Space), Sending Default table')
         cursor = con.cursor()
         command = 'SELECT * FROM companies order by company_name;'
         cursor.execute(command)
@@ -259,7 +257,7 @@ def select_all_from_table(request, ticker):
         ticker = data[0][0]
     ticker = ticker.upper()
     tablename = convert_ticker_name(ticker)
-    print(f"Tablename is {tablename}")
+    print(f"Table name is {tablename}")
     cursor = con.cursor()
     cursor.execute(f'''select * from {tablename} order by date;''')
     data = cursor.fetchall()[-get_last:]
@@ -434,12 +432,12 @@ def train_for_ticker(ticker):
     for time in range(len(series) - window_size):
         forecast.append(model.predict(series[time:time + window_size][np.newaxis]))
 
-    results = np.array(forecast)[:, 0, 0]
+    # results = np.array(forecast)[:, 0, 0]
     # plt.plot(series[window_size:])
     # plt.plot(results)
     # plt.figure(figsize=(24, 12))
     # plt.show()
-    today = datetime.now().date().strftime('%Y-%m-%d')
+    # today = datetime.now().date().strftime('%Y-%m-%d')
     model = tf.keras.models.load_model('./models/' + ticker + '_model.h5')
 
     forecast = []
@@ -468,7 +466,7 @@ def subscriber_email(ticker, image_path):
     cursor.execute(command)
     data = cursor.fetchall()
     print(ticker)
-    receiver_email = ["rakshithcrm@gmail.com"]  # Enter receiver address
+    receiver_email = []  # Enter receiver address
     for email in data:
         if email[0] not in receiver_email:
             receiver_email.append(email[0])
@@ -538,7 +536,7 @@ def daily_quick_peek(ticker):
     cursor.execute(command)
     data = cursor.fetchall()
     print(ticker)
-    receiver_email = ["rakshithcrm@gmail.com"]  # Enter receiver address
+    receiver_email = []  # Enter receiver address
     for email in data:
         if email[0] not in receiver_email:
             receiver_email.append(email[0])
@@ -639,7 +637,7 @@ def forecast_for_ticker(ticker, force=0):
         print('Group Inserting Data')
         group_insert(ticker, group_insert_data)
         print('Group Data Inserted')
-        if force == 0:
+        if force == 0 and is_holiday(today):
             daily_quick_peek(ticker)
     except:
         return False
@@ -653,4 +651,3 @@ def is_holiday(date):
     if weekday == 5 or weekday == 6:
         return True
     return False
-

@@ -74,10 +74,11 @@ class ApiConfig(AppConfig):
                 forecasted = False
                 if trained:
                     forecasted = forecast_for_ticker(ticker, force=1)
-                if trained == True and forecasted == True:
+                if trained is True and forecasted is True:
                     print(f'SERVER FROM START: INITIAL {ticker} LOADED')
                 else:
                     message = 'Fatal Server Error!'
+                    print(message)
                     exit(-1)
         elif len(data) == 0 and len(models_available) == 0:
             print('NO DATA FOUND\nSERVER BOOTING WITH INITIAL DATA')
@@ -99,10 +100,11 @@ class ApiConfig(AppConfig):
             forecasted = False
             if trained:
                 forecasted = forecast_for_ticker(ticker, force=1)
-            if trained == True and forecasted == True:
+            if trained is True and forecasted is True:
                 print(f'SERVER FROM START: INITIAL {ticker} LOADED')
             else:
                 message = 'Fatal Server Error!'
+                print(message)
                 exit(-1)
         elif len(data) < len(models_available):
             print('New models detected...')
@@ -130,10 +132,11 @@ class ApiConfig(AppConfig):
                 forecasted = False
                 if trained:
                     forecasted = forecast_for_ticker(ticker, force=1)
-                if trained == True and forecasted == True:
+                if trained is True and forecasted is True:
                     print(f'SERVER FROM START: INITIAL {ticker} LOADED')
                 else:
                     message = 'Fatal Server Error!'
+                    print(message)
                     exit(-1)
         else:
             command = 'SELECT * FROM companies;'
@@ -149,4 +152,3 @@ class ApiConfig(AppConfig):
             for company in companies:
                 forecast_for_ticker(company)
             print(f''':{'-' * 33}:''')
-
