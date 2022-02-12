@@ -28,9 +28,8 @@ python manage.py runserver 0.0.0.0:8000
 
 ## Screenshots
 
-![[images/1.png]]
-
-![[images/2.png]]
+<img src="images/1.png">
+<img src="images/2.png">
 
 ---
 
