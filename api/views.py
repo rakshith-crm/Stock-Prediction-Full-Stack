@@ -409,7 +409,7 @@ def train_for_ticker(ticker):
             tf.keras.layers.Dense(1)
         ])
         if average_stock_price < 3000:
-            lr = 1e-8
+            lr = 1e-10
         elif 3000 <= average_stock_price < 8000:
             lr = 1e-9
         elif 8000 <= average_stock_price < 16000:
@@ -421,7 +421,7 @@ def train_for_ticker(ticker):
         else:
             lr = 1e-13
         epochs = 500
-
+        print('Learning Rate : ', lr)
         model.compile(loss='mse', optimizer=tf.keras.optimizers.SGD(learning_rate=lr, momentum=0.9))
         model.fit(dataset, epochs=epochs)
 
