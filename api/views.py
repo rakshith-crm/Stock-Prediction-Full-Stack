@@ -590,8 +590,9 @@ def forecast_for_ticker(ticker, force=0):
             return False
         else:
             print(f'|%-22s |  False  |' % checking)
-            if is_holiday(today) and force == 0:
-                return False
+            
+        if(is_holiday(today)) and force == 0:
+            return False
         model = tf.keras.models.load_model('./models/' + ticker + '_model.h5')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
         series = np.array(stock_price)
