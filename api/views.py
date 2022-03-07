@@ -48,7 +48,7 @@ else:
 
 predict_till = 50
 get_last = 400  # days
-rewrite_last = 10
+rewrite_last = 60
 
 
 def hash_function(ticker):
@@ -641,8 +641,7 @@ def forecast_for_ticker(ticker, force=0):
         print('Group Inserting Data')
         group_insert(ticker, group_insert_data)
         print('Group Data Inserted')
-        if force == 0 and is_holiday(today):
-            daily_quick_peek(ticker)
+        daily_quick_peek(ticker)
     except:
         return False
     return True
