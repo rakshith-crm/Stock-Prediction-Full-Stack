@@ -594,8 +594,9 @@ def forecast_for_ticker(ticker, force=0):
         format = '%Y-%m-%d'
         inp_date = datetime.strptime(today, format)
         weekday = inp_date.weekday()
-        if weekday != 0 and force == 0:
-            return False
+        # server run only on monday
+        # if weekday != 0 and force == 0:
+        #     return False
         model = tf.keras.models.load_model('./models/' + ticker + '_model.h5')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
         series = np.array(stock_price)
@@ -605,6 +606,7 @@ def forecast_for_ticker(ticker, force=0):
         for i in range(rewrite_last):
             # print(f'{ticker}, ({dates[-2-i]}, {series[-2-i]}, None)')
             rewrite_last_group_data.append((dates[-2 - i], series[-2 - i], None))
+        print('Rewriting Actual Stock Data...')
         group_insert(ticker, rewrite_last_group_data)
         # data = windowed_dataset(series[-8:], window_size, batch_size, None)
 
@@ -641,7 +643,8 @@ def forecast_for_ticker(ticker, force=0):
         print('Group Inserting Data')
         group_insert(ticker, group_insert_data)
         print('Group Data Inserted')
-        daily_quick_peek(ticker)
+        if weekday % 2 == 0:
+            daily_quick_peek(ticker)
     except:
         return False
     return True
