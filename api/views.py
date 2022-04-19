@@ -585,19 +585,6 @@ def forecast_for_ticker(ticker, force=0):
         # print(command)
         cursor.execute(command)
         data = cursor.fetchall()
-        if len(data) > 0:
-            print(f'|%-22s |  True   |' % checking)
-            return False
-        else:
-            print(f'|%-22s |  False  |' % checking)
-
-        format = '%Y-%m-%d'
-        inp_date = datetime.strptime(today, format)
-        weekday = inp_date.weekday()
-        # server run only on monday
-        # if weekday != 0 and force == 0:
-        #     return False
-        model = tf.keras.models.load_model('./models/' + ticker + '_model.h5')
         stock_price = yf.Ticker(ticker).history(start='2021-01-01', end=today).Close
         series = np.array(stock_price)
         dates = np.array([time.strftime('%Y-%m-%d') for time in stock_price.index])
@@ -608,6 +595,20 @@ def forecast_for_ticker(ticker, force=0):
             rewrite_last_group_data.append((dates[-2 - i], series[-2 - i], None))
         print('Rewriting Actual Stock Data...')
         group_insert(ticker, rewrite_last_group_data)
+
+        if len(data) > 0:
+            print(f'|%-22s |  True   |' % checking)
+            return False
+        else:
+            print(f'|%-22s |  False  |' % checking)
+
+        format = '%Y-%m-%d'
+        inp_date = datetime.strptime(today, format)
+        weekday = inp_date.weekday()
+        # server run only on monday
+        if weekday % 2 != 0 and force == 0:
+            return False
+        model = tf.keras.models.load_model('./models/' + ticker + '_model.h5')
         # data = windowed_dataset(series[-8:], window_size, batch_size, None)
 
         print('''Yesterday's Stock Value \t: ''', series[-1], ' - ', dates[-1])
@@ -643,8 +644,8 @@ def forecast_for_ticker(ticker, force=0):
         print('Group Inserting Data')
         group_insert(ticker, group_insert_data)
         print('Group Data Inserted')
-        if weekday % 2 == 0:
-            daily_quick_peek(ticker)
+        # if weekday % 2 == 0:
+        #     daily_quick_peek(ticker)
     except:
         return False
     return True
